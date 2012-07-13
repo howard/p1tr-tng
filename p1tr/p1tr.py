@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import argparse
 import configparser
 import inspect
 import os
@@ -174,9 +175,15 @@ def on_connect(client):
     helpers.join(client, '#p1tr-test')
     client.send('PRIVMSG', '#p1tr-test', ':Just talking...')
 
+
 def main():
+    argparser = argparse.ArgumentParser(description='P1tr TNG - IRC bot.')
+    argparser.add_argument('-c', '--conf', help='path to configuration file',
+            action='store', default='config.cfg')
+    args = argparser.parse_args()
+
     client = IRCClient(BotHandler, host='irc.freenode.net', port=6667, nick='p1tr-test', connect_cb=on_connect)
-    client.command_handler.load_config()
+    client.command_handler.load_config(args.conf)
     client.command_handler.load_plugins()
     connection = client.connect()
     while True:
