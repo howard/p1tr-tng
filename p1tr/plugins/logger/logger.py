@@ -1,0 +1,2 @@
+class Logger(Plugin):
+    pass
