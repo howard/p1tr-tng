@@ -69,6 +69,13 @@ class require_master:
     Commands with this decorator are only executed if the caller is the
     bot master.
     """
+    
+    def __init__(self, func):
+        self.func = func
+        self.func.__annotations__['require_master'] = True
+
+    def __call__(self, *args):
+        return self.func(*args)
 
 class require_op:
     """
@@ -77,6 +84,7 @@ class require_op:
 
     def __init__(self, func):
         self.func = func
+        self.func.__annotations__['require_op'] = True
 
     def __call__(self, *args):
         return self.func(*args)
@@ -88,7 +96,8 @@ class require_voice:
     """
 
     def __init__(self, func):
-        self.fund = func
+        self.func = func
+        self.func.__annotations__['require_voice'] = True
 
     def __call__(self, *args):
         return self.func(*args)
