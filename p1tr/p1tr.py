@@ -82,21 +82,19 @@ class BotHandler(DefaultCommandHandler):
                 except PluginError as pe:
                     print('Plugin ' + plugin_dir_name + 
                             ' could not be loaded: ' + str(pe))
-                #try:
-                #    module = __import__('plugins.' + plugin_dir_name + '.' +
-                #            plugin_dir_name)
-                #    plugin = getattr(module, plugin_dir_name.capitalize())()
-                #    plugin.load_settings(config)
-                #    self.plugins[plugin_dir_name] = plugin
-                #except ImportError:
-                #    print('Could no load plugin "' + plugin_dir_name + '".')
 
+    def _for_each_plugin(self, func):
+        """
+        Calls the given function for each plugin, with the plugin instance as a
+        parameter.
+        """
+        for plugin_name in self.plugins:
+            func(self.plugins[plugin_name])
 
     def privmsg(self, nick, chan, msg):
-        for plugin_name in self.plugins:
-            self.plugins[plugin_name].privmsg(self.client.host,
-                    chan.decode('utf-8'), nick.decode('utf-8'),
-                    msg.decode('utf-8'))
+        self._for_each_plugin(lambda plugin:
+                plugin.privmsg(self.client.host, chan.decode('utf-8'),
+                    nick.decode('utf-8'), msg.decode('utf-8')))
 
 
 def on_connect(client):

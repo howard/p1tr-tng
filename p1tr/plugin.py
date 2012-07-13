@@ -27,16 +27,6 @@ def load_by_name(plugin_name, config):
     The parameter config should be an instance of ConfigParser, which has
     already parsed the config file.
     """
-    #try:
-    #    # Try current working directory
-    #    module = __import__(os.path.join('plugins', plugin_name, plugin_name + '.py'))
-    #except ImportError:
-    #    try:
-    #        # Try P1tr home
-    #        module = __import__(os.path.join(config['General']['home'], 'plugins', plugin_name, plugin_name + '.py'))
-    #    except ImportError:
-    #        # TODO: Try install location
-    #        raise PluginError('Plugin not found.')
     try:
         module = __import__('plugins.' + plugin_name + '.' + plugin_name)
     except ImportError:
