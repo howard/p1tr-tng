@@ -6,3 +6,4 @@ dist
 P1tr.egg-info
 __pycache__
 *.swp
+p1tr/config.cfg

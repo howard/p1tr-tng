@@ -14,9 +14,12 @@ background = no
 # This setting overrides all server-/channel-specific settings - those may only
 # extend the global blacklist.
 plugin_blacklist =
+# The word following the character below is interpreted as a command and passed
+# on to the plugins.
+signal_character = +
 
 # This is a sample configuration, demonstrating the available options.
-[SampleServer]
+;[SampleServer]
 # The bot's nick name on this server.
 ;nick = P1tr-test
 # If the nick name specified above is registered with NickServ, you may provide
@@ -39,13 +42,13 @@ plugin_blacklist =
 # settings can only extend the combined global/server plugin blacklist.
 ;plugin_blacklist =
 # Each channel the bot is supposed to join has its own section which is named
-# according to the pattern "ServerName-channelName". In this case, ServerName
+# according to the pattern "ServerName|channelName". In this case, ServerName
 # is "SampleServer" - this part must equal the name of the section which holds
 # the general server configuration. Note that the # character specifies a
 # comment in this configuration file format, which is why it is substituted by
-# a dash '-'. If your channel is called #channel, the section name should be
+# a bar '|'. If your channel is called #channel, the section name should be
 # "SampleServer-channel".
-;[SampleServer-channel]
+;[SampleServer|channel]
 # Some channels can only be joined if a password is provided. Leave the property
 # empty if the channel is public.
 ;password = 

@@ -29,17 +29,14 @@ def load_by_name(plugin_name, config):
     """
     try:
         # Try current working directory
-        module = __import__(os.path.join('plugins', plugin_name,
-            plugin_name + '.py')
+        module = __import__(os.path.join('plugins', plugin_name, plugin_name + '.py'))
     except ImportError:
         try:
             # Try P1tr home
-            module = __import__(os.path.join(config['General']['home'],
-                'plugins', plugin_name, plugin_name + '.py')
+            module = __import__(os.path.join(config['General']['home'], 'plugins', plugin_name, plugin_name + '.py'))
         except ImportError:
-            try:
-                # TODO: Try install location
-                raise PluginError('Plugin not found.')
+            # TODO: Try install location
+            raise PluginError('Plugin not found.')
     
     # Create instance and check type.
     instance = getattr(getattr(module, plugin_name), plugin_name.capitalize())()
@@ -49,6 +46,52 @@ def load_by_name(plugin_name, config):
     # Apply settings and return plugin instance.
     instance.apply_settings(config)
     return instance
+
+
+# Decorators:
+class command:
+    """
+    Plugin methods with this decorator are callable as irc commands. By default,
+    the command name is the name of the method. The "name" decorator argument
+    can change that. The command is then available in IRC by writing the signal
+    character as defined in the configuration file, and the name of the command
+    immediately after the character.
+    """
+
+    def __init__(self, name):
+        self.name = name
+
+    def __call__(self, func):
+        return func
+
+class require_master:
+    """
+    Commands with this decorator are only executed if the caller is the
+    bot master.
+    """
+
+class require_op:
+    """
+    Commands with this decorator are only executed if the caller is op.
+    """
+
+    def __init__(self, func):
+        self.func = func
+
+    def __call__(self, *args):
+        return self.func(*args)
+
+class require_voice:
+    """
+    Commands with this decorator are only executed if the caller is op
+    or has voice.
+    """
+
+    def __init__(self, func):
+        self.fund = func
+
+    def __call__(self, *args):
+        return self.func(*args)
 
     
 class PluginError(Exception):
