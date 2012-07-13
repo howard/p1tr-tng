@@ -42,12 +42,12 @@ class Logger(Plugin):
     def quit(self):
         print(' *** BOT TERMINATED *** ')
 
-    @command(name='disable_logger')
+    @command
     @require_op
-    def disable(self, server, channel, user, params):
+    def disable_logging(self, server, channel, nick, args):
         pass #TODO
 
-    @command(name='enable_logger') 
+    @command
     @require_op
-    def enable(self, server, channel, user, params):
+    def enable_logging(self, server, channel, nick, args):
         pass #TODO

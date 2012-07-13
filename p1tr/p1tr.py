@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import configparser
+import inspect
 import os
 import os.path
 import sys
@@ -15,6 +16,11 @@ class BotError(Exception):
 class BotHandler(DefaultCommandHandler):
 
     plugins = dict()
+    """
+    The commands dictionary has the name of the command as key and
+    plugin providing this command as value.
+    """
+    commands = dict()
 
     def load_config(self, path=None):
         """
@@ -30,14 +36,13 @@ class BotHandler(DefaultCommandHandler):
         else:
             if self.config.read('config.cfg') == []:
                 raise BotError("No config in the working directory.")
-        # Set home, if available:
-        try:
-            self.home = self.config['General'].get('home')
-            self.global_plugin_blacklist = self.config['General'].get(
-                    'plugin_blacklist').split(',')
-        except KeyError:
-            self.home = ''
-            self.global_plugin_blacklist = []
+        # Load some config settings; if unavailable, use defaults.
+        self.home = self.config.get('General', 'home') or ''
+        self.global_plugin_blacklist = self.config.get('General',
+                'plugin_blacklist').split(',') or []
+        self.signal_character = self.config.get('General', 'signal_character'
+                ) or '+'
+        
 
     def load_plugins(self, extra_path=None):
         """
@@ -76,8 +81,17 @@ class BotHandler(DefaultCommandHandler):
                 # Loading plugins, if a plugin with the same name has not been
                 # loaded yet.
                 try:
-                    self.plugins[plugin_dir_name] = load_by_name(
-                            plugin_dir_name, self.config)
+                    this_plugin = load_by_name(plugin_dir_name, self.config)
+                    # Scan for command methods:
+                    for member in inspect.getmembers(this_plugin):
+                        try:
+                            if member[1].__annotations__['command'] == True:
+                                self.commands[member[0]] = this_plugin
+                                print('The plugin "' + plugin_dir_name +
+                                        '" provides the command "' + member[0] + '".')
+                        except (AttributeError, KeyError): pass # Not a command
+
+                    self.plugins[plugin_dir_name] = this_plugin
                     print('Plugin ' + plugin_dir_name + ' was loaded.')
                 except PluginError as pe:
                     print('Plugin ' + plugin_dir_name + 
@@ -96,6 +110,29 @@ class BotHandler(DefaultCommandHandler):
                 plugin.privmsg(self.client.host + ':' + str(self.client.port),
                     chan.decode('utf-8'), nick.decode('utf-8'),
                     msg.decode('utf-8')))
+        # Check for commands
+        try:
+            cmd = ''
+            args = []
+            msg = msg.decode('utf-8')
+            if msg.startswith(self.signal_character):
+                parts = msg.replace(self.signal_character, '').split(' ')
+                cmd = parts[0]
+                args = parts[1:]
+            elif msg.startswith(self.client.nick):
+                parts = msg.replace(self.client.nick, '', 1).split(' ')
+                cmd = parts[1]
+                args = parts[2:]
+            else:
+                return
+            # Attempt to issue command, silently fail if this is not one.
+            ret_val = getattr(self.commands[cmd], cmd)(self.client.host + ':' +
+                    str(self.client.port), chan.decode('utf-8'),
+                    nick.decode('utf-8'), args)
+            # If text was returned, send it as a response.
+            if isinstance(ret_val, str):
+                self.client.send('PRIVMSG', chan, ':' + ret_val)
+        except (ValueError, KeyError): pass
 
     def join(self, nick, chan):
         nick = nick.decode('utf-8')

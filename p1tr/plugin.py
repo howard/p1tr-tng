@@ -43,58 +43,40 @@ def load_by_name(plugin_name, config):
 
 
 # Decorators:
-class command:
-    """
-    Plugin methods with this decorator are callable as irc commands. By default,
-    the command name is the name of the method. The "name" decorator argument
-    can change that. The command is then available in IRC by writing the signal
-    character as defined in the configuration file, and the name of the command
-    immediately after the character.
-    """
+def command(func):
+    try:
+        func.__annotations__['command'] = True
+    except AttributeError:
+        func.__annotations__ = {'command': True}
+    return func
 
-    def __init__(self, name):
-        self.name = name
+def require_master(func):
+    try:
+        func.__annotations__['require_master'] = True
+    except AttributeError:
+        func.__annotations__ = {'require_master': True}
+    return func
 
-    def __call__(self, func):
-        return func
+def require_op(func):
+    try:
+        func.__annotations__['require_op'] = True
+    except AttributeError:
+        func.__annotations__ = {'require_op': True}
+    return func
 
-class require_master:
-    """
-    Commands with this decorator are only executed if the caller is the
-    bot master.
-    """
-    
-    def __init__(self, func):
-        self.func = func
-        self.func.__annotations__['require_master'] = True
+def require_voice(func):
+    try:
+        func.__annotations__['require_voice'] = True
+    except AttributeError:
+        func.__annotations__ = {'require_voice': True}
+    return func
 
-    def __call__(self, *args):
-        return self.func(*args)
-
-class require_op:
-    """
-    Commands with this decorator are only executed if the caller is op.
-    """
-
-    def __init__(self, func):
-        self.func = func
-        self.func.__annotations__['require_op'] = True
-
-    def __call__(self, *args):
-        return self.func(*args)
-
-class require_voice:
-    """
-    Commands with this decorator are only executed if the caller is op
-    or has voice.
-    """
-
-    def __init__(self, func):
-        self.func = func
-        self.func.__annotations__['require_voice'] = True
-
-    def __call__(self, *args):
-        return self.func(*args)
+def require_presence(func):
+    try:
+        func.__annotations__['require_presence'] = True
+    except AttributeError:
+        func.__annotations__ = {'require_presence': True}
+    return func
 
     
 class PluginError(Exception):
