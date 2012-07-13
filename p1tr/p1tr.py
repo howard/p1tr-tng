@@ -115,6 +115,10 @@ class BotHandler(DefaultCommandHandler):
             cmd = ''
             args = []
             msg = msg.decode('utf-8')
+            if chan.decode('utf-8') == self.client.nick:
+                respond_to = nick.decode('utf-8').split('!')[0]
+            else:
+                respond_to = chan.decode('utf-8')
             if msg.startswith(self.signal_character):
                 parts = msg.replace(self.signal_character, '').split(' ')
                 cmd = parts[0]
@@ -123,6 +127,10 @@ class BotHandler(DefaultCommandHandler):
                 parts = msg.replace(self.client.nick, '', 1).split(' ')
                 cmd = parts[1]
                 args = parts[2:]
+            elif chan.decode('utf-8') == self.client.nick: # In case of query
+                parts = msg.split(' ')
+                cmd = parts[0]
+                args = parts[1:]
             else:
                 return
             # Attempt to issue command, silently fail if this is not one.
@@ -131,7 +139,7 @@ class BotHandler(DefaultCommandHandler):
                     nick.decode('utf-8'), args)
             # If text was returned, send it as a response.
             if isinstance(ret_val, str):
-                self.client.send('PRIVMSG', chan, ':' + ret_val)
+                self.client.send('PRIVMSG', respond_to, ':' + ret_val)
         except (ValueError, KeyError): pass
 
     def join(self, nick, chan):
