@@ -93,12 +93,41 @@ class BotHandler(DefaultCommandHandler):
 
     def privmsg(self, nick, chan, msg):
         self._for_each_plugin(lambda plugin:
-                plugin.privmsg(self.client.host, chan.decode('utf-8'),
-                    nick.decode('utf-8'), msg.decode('utf-8')))
+                plugin.privmsg(self.client.host + ':' + str(self.client.port),
+                    chan.decode('utf-8'), nick.decode('utf-8'),
+                    msg.decode('utf-8')))
+
+    def join(self, nick, chan):
+        nick = nick.decode('utf-8')
+        if nick.split('!')[0] == self.client.nick:
+            self._for_each_plugin(lambda plugin:
+                    plugin.join(self.client.host + ':' + str(self.client.port),
+                        chan.decode('utf-8')))
+        else:
+            self._for_each_plugin(lambda plugin:
+                    plugin.userjoin(self.client.host + ':' + str(self.client.port),
+                        chan.decode('utf-8'), nick))
+ 
+    def connected(self):
+        self._for_each_plugin(lambda plugin:
+                plugin.connect(self.client.host + ':' + str(self.client.port)))
+
+    def quit(self, message):
+        """Called on disconnect."""
+        self._for_each_plugin(lambda plugin:
+                plugin.disconnect(self.client.host + ':' + str(self.client.port),
+                    message.decode('utf-8')))
+
+    def exit(self):
+        """Called on bot termination."""
+        self._for_each_plugin(lambda plugin:
+                plugin.quit())
 
 
 def on_connect(client):
+    client.command_handler.connected()
     helpers.join(client, '#p1tr-test')
+    client.send('PRIVMSG', '#p1tr-test', ':Just talking...')
 
 def main():
     client = IRCClient(BotHandler, host='irc.freenode.net', port=6667, nick='p1tr-test', connect_cb=on_connect)
@@ -109,7 +138,9 @@ def main():
         try:
             next(connection) 
         except KeyboardInterrupt:
+            print('KeyboardInterrupt')
             break
+    client.command_handler.exit()
 
 
 

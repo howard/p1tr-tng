@@ -27,6 +27,21 @@ class Logger(Plugin):
     def privmsg(self, server, channel, user, message):
         print('[' + server + channel + '] <' + user + '> ' + message)
 
+    def join(self, server, channel):
+        print('[' + server + channel + '] ** The bot joined the channel.')
+
+    def userjoin(self, server, channel, nick):
+        print('[' + server + channel + '] ** ' + nick + ' joined the channel.')
+
+    def connect(self, server):
+        print('[' + server + '] Connected.')
+
+    def disconnect(self, server):
+        print('[' + server + '] Disconnected.')
+
+    def quit(self):
+        print(' *** BOT TERMINATED *** ')
+
     @command(name='disable_logger')
     @require_op
     def disable(self, server, channel, user, params):
