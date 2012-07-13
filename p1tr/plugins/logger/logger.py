@@ -24,7 +24,7 @@ class Logger(Plugin):
             if 'logger.log' in section and section.getboolean('logger.log'):
                 self._restricted_channels.append(section)
 
-    def on_privmsg(self, server, channel, user, message):
+    def privmsg(self, server, channel, user, message):
         print('[' + server + channel + '] <' + user + '> ' + message)
 
     @command(name='disable_logger')

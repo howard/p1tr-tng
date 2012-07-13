@@ -27,24 +27,28 @@ def load_by_name(plugin_name, config):
     The parameter config should be an instance of ConfigParser, which has
     already parsed the config file.
     """
+    #try:
+    #    # Try current working directory
+    #    module = __import__(os.path.join('plugins', plugin_name, plugin_name + '.py'))
+    #except ImportError:
+    #    try:
+    #        # Try P1tr home
+    #        module = __import__(os.path.join(config['General']['home'], 'plugins', plugin_name, plugin_name + '.py'))
+    #    except ImportError:
+    #        # TODO: Try install location
+    #        raise PluginError('Plugin not found.')
     try:
-        # Try current working directory
-        module = __import__(os.path.join('plugins', plugin_name, plugin_name + '.py'))
+        module = __import__('plugins.' + plugin_name + '.' + plugin_name)
     except ImportError:
-        try:
-            # Try P1tr home
-            module = __import__(os.path.join(config['General']['home'], 'plugins', plugin_name, plugin_name + '.py'))
-        except ImportError:
-            # TODO: Try install location
-            raise PluginError('Plugin not found.')
+        raise PluginError('Plugin "' + plugin_name + '" not found.')
     
     # Create instance and check type.
-    instance = getattr(getattr(module, plugin_name), plugin_name.capitalize())()
-    if not (instance is Plugin):
+    instance = getattr(getattr(getattr(module, plugin_name), plugin_name), plugin_name.capitalize())()
+    if not isinstance(instance, Plugin):
         raise PluginError('Invalid plugin: Not derived from Plugin.')
 
     # Apply settings and return plugin instance.
-    instance.apply_settings(config)
+    instance.load_settings(config)
     return instance
 
 
@@ -152,3 +156,10 @@ class Plugin:
             for key in section:
                 if __name__.lower() + '.' in key:
                     settings[__name__.__len__() + 1:] = section[key]
+
+    def privmsg(self, server, channel, user, message):
+        """
+        Triggered whenever a message is received. Returning a string sends the
+        string as a response to the user.
+        """
+        pass
