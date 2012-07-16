@@ -139,7 +139,7 @@ class BotHandler(DefaultCommandHandler):
                     str(self.client.port), chan.decode('utf-8'),
                     nick.decode('utf-8'), args)
             # If text was returned, send it as a response.
-            if isinstance(ret_val, str):
+            if isinstance(ret_val, str) or isinstance(ret_val, bytes):
                 self.client.send('PRIVMSG', respond_to, ':' + ret_val)
         except (ValueError, KeyError): pass
 
@@ -172,7 +172,7 @@ class BotHandler(DefaultCommandHandler):
 
 def on_connect(client):
     client.command_handler.connected()
-    helpers.join(client, '#p1tr-test')
+    helpers.join(client, '#austriangeekforce')
     client.send('PRIVMSG', '#p1tr-test', ':Just talking...')
 
 
