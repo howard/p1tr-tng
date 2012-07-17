@@ -20,11 +20,11 @@ class Help(Plugin):
             if params[0] in self.bot.plugins: # Plugin found
                 help_msg = clean_string(self.bot.plugins[params[0]].__doc__ or \
                         'Sorry, no help message available.')
-                commands = list(name \
+                commands = sorted(list(name \
                         for name, member \
                         in inspect.getmembers(self.bot.plugins[params[0]])
                         if hasattr(member, '__annotations__') \
-                                and 'command' in member.__annotations__)
+                                and 'command' in member.__annotations__))
                 if len(commands) > 0:
                     help_msg += ' Commands: ' + ' '.join(commands)
                 return clean_string(help_msg)
