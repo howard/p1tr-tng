@@ -83,6 +83,10 @@ class BotHandler(DefaultCommandHandler):
                 # loaded yet.
                 try:
                     this_plugin = load_by_name(plugin_dir_name, self.config)
+                    # If this is a meta plugin, add the bot attribute:
+                    if hasattr(this_plugin, '__annotations__') and \
+                            this_plugin.__annotations__['meta_plugin']:
+                        this_plugin.bot = self
                     # Scan for command methods:
                     for member in inspect.getmembers(this_plugin):
                         try:

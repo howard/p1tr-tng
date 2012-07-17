@@ -43,6 +43,20 @@ def load_by_name(plugin_name, config):
 
 
 # Decorators:
+def meta_plugin(a_class):
+    """
+    Plugin classes decorated with this item receive a special attribute after
+    contruction of type p1tr.p1tr.BotHandler as self.bot, which gives full
+    access to the bot (enabling raw operations on the IRC protocol), and to
+    all plugin instances. Use with caution and only if absolutely necessary.
+    You could break a lot.
+    """
+    try:
+        a_class.__annotations__['meta_plugin'] = True
+    except AttributeError:
+        a_class.__annotations__ = {'meta_plugin': True}
+    return a_class
+
 def command(func):
     try:
         func.__annotations__['command'] = True
@@ -79,6 +93,18 @@ def require_presence(func):
     return func
 
     
+# Some utility functions
+def clean_string(string):
+    """
+    Converts whitespace (includes newlines etc.) to single spaces. Useful to
+    avoid problems with the IRC protocol, which treats newlines, for example,
+    as message terminator.
+    """
+    if isinstance(string, bytes):
+        string = string.decode('utf-8')
+    return ' '.join(string.split())
+
+
 class PluginError(Exception):
     """
     Thrown when plugin loading fails.
@@ -111,7 +137,6 @@ class Plugin:
         """
         Always call this constructor first thing in your plugin's constructor.
         """
-        # TODO: load settings and persistend storage
 
     def load_settings(self, config):
         """
