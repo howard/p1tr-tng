@@ -1,3 +1,4 @@
+import inspect
 from plugin import *
 
 @meta_plugin
@@ -8,15 +9,24 @@ class Help(Plugin):
     def help(self, server, channel, nick, params):
         """
         Usage: help PLUGIN [COMMAND] - prints a help message. If only PLUGIN is
-        specified, you get general plugin information. Otherwise, the help for
-        the specific COMMAND of the PLUGIN is provided. If PLUGIN can't be
-        found, I will look for a command with that name.
+        specified, you get general plugin information and a list of available
+        commands. Otherwise, the help for the specific COMMAND of the PLUGIN is
+        provided. If PLUGIN can't be found, I will look for a command with that
+        name.
         """
         if len(params) < 1:
             return clean_string(self.help.__doc__)
         if len(params) < 2:
             if params[0] in self.bot.plugins: # Plugin found
-                return clean_string(self.bot.plugins[params[0]].__doc__)
+                help_msg = clean_string(self.bot.plugins[params[0]].__doc__)
+                commands = list(name \
+                        for name, member \
+                        in inspect.getmembers(self.bot.plugins[params[0]])
+                        if hasattr(member, '__annotations__') \
+                                and 'command' in member.__annotations__)
+                if len(commands) > 0:
+                    help_msg += ' Commands: ' + ' '.join(commands)
+                return clean_string(help_msg)
             elif params[0] in self.bot.commands: # Command found
                 return clean_string(getattr(
                     self.bot.commands[params[0]], params[0]).__doc__)
