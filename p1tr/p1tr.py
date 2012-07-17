@@ -172,8 +172,11 @@ class BotHandler(DefaultCommandHandler):
 
 def on_connect(client):
     client.command_handler.connected()
-    helpers.join(client, '#austriangeekforce')
-    client.send('PRIVMSG', '#p1tr-test', ':Just talking...')
+    # Join channels listed in the configuration file.
+    for section in client.command_handler.config.sections():
+        if section.startswith(client.host) and '|' in section:
+            client.send('JOIN', '#' + section.split('|')[1])
+    # TODO: Auto-op if configured.
 
 
 def main():
