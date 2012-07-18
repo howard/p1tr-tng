@@ -1,15 +1,15 @@
-#!/usr/bin/env python3
-
 import argparse
 import configparser
 import inspect
 import os
 import os.path
 import sys
+sys.path.insert(0, os.getcwd())
+
 from oyoyo.client import IRCClient
 from oyoyo.cmdhandler import DefaultCommandHandler
 from oyoyo import helpers
-from plugin import *
+from p1tr.plugin import *
 
 class BotError(Exception):
     """Raised on configuration- and non-plugin errors."""
@@ -59,7 +59,10 @@ class BotHandler(DefaultCommandHandler):
         if (extra_path):
             paths.insert(0, extra_path)
         try:
-            paths.append(os.path.realpath(__file__))
+            # plugins folder is in p1tr.py's parent directory.
+            paths.append(os.path.join(
+                os.path.split(
+                    os.path.dirname(os.path.realpath(__file__)))[0], 'plugins'))
         except NameError: pass # __file__ is not defined in the python shell.
         paths = list(set(paths)) # Remove duplicates.
 
@@ -77,6 +80,10 @@ class BotHandler(DefaultCommandHandler):
                     continue
                 if plugin_dir_name in self.global_plugin_blacklist:
                     print(plugin_dir_name + ' is blacklisted.')
+                    continue
+                # Skip plugins if one with the same name has already been loaded
+                if plugin_dir_name in self.plugins.keys():
+                    print(plugin_dir_name + ' is a duplicate.')
                     continue
                 # Files and globally blacklisted plugins are skipped now.
                 # Loading plugins, if a plugin with the same name has not been
@@ -184,7 +191,6 @@ def on_connect(client):
 
 
 def main():
-    sys.path.insert(0, '..')
     argparser = argparse.ArgumentParser(description='P1tr TNG - IRC bot.')
     argparser.add_argument('-c', '--conf', help='path to configuration file',
             action='store', default='config.cfg')

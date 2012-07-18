@@ -1,15 +1,14 @@
-"""
-Conversation logging plugin.
-
-Conversations are logged by default to a file in the bot's home directory. This
-can be disabled by adding logger.log = no to the channel's section in the
-configuration file.
-"""
-
-from plugin import *
+from p1tr.plugin import *
 
 class Logger(Plugin):
+    """
+    Conversation logging plugin.
 
+    Conversations are logged by default to a file in the bot's home directory. This
+    can be disabled by adding logger.log = no to the channel's section in the
+    configuration file.
+    """
+    
     _restricted_channels = []
 
     def __init__(self):

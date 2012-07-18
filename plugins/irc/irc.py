@@ -1,4 +1,4 @@
-from plugin import *
+from p1tr.plugin import *
 
 @meta_plugin
 class Irc(Plugin):

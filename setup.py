@@ -13,10 +13,12 @@ setup(
         description='A modular irc bot.',
         author='Christian Ortner',
         author_email='chris.ortner@gmail.com',
+        keywords='plugin irc bot',
         license='MIT',
         url='https://github.com/howard/p1tr',
         install_requires=['oyoyo'],
         include_package_data=True,
+        packages=find_packages(),
         entry_points="""
         [console_scripts]
         p1tr = p1tr.p1tr:main
