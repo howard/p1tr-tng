@@ -112,7 +112,7 @@ class BotHandler(DefaultCommandHandler):
 
     def privmsg(self, nick, chan, msg):
         self._for_each_plugin(lambda plugin:
-                plugin.privmsg(self.client.host + ':' + str(self.client.port),
+                plugin.on_privmsg(self.client.host + ':' + str(self.client.port),
                     chan.decode('utf-8'), nick.decode('utf-8'),
                     msg.decode('utf-8')))
         # Check for commands
@@ -151,16 +151,16 @@ class BotHandler(DefaultCommandHandler):
         nick = nick.decode('utf-8')
         if nick.split('!')[0] == self.client.nick:
             self._for_each_plugin(lambda plugin:
-                    plugin.join(self.client.host + ':' + str(self.client.port),
+                    plugin.on_join(self.client.host + ':' + str(self.client.port),
                         chan.decode('utf-8')))
         else:
             self._for_each_plugin(lambda plugin:
-                    plugin.userjoin(self.client.host + ':' + str(self.client.port),
+                    plugin.on_userjoin(self.client.host + ':' + str(self.client.port),
                         chan.decode('utf-8'), nick))
  
     def connected(self):
         self._for_each_plugin(lambda plugin:
-                plugin.connect(self.client.host + ':' + str(self.client.port)))
+                plugin.on_connect(self.client.host + ':' + str(self.client.port)))
 
     def quit(self, message):
         """Called on disconnect."""
@@ -171,7 +171,7 @@ class BotHandler(DefaultCommandHandler):
     def exit(self):
         """Called on bot termination."""
         self._for_each_plugin(lambda plugin:
-                plugin.quit())
+                plugin.on_quit())
 
 
 def on_connect(client):
@@ -184,6 +184,7 @@ def on_connect(client):
 
 
 def main():
+    sys.path.insert(0, '..')
     argparser = argparse.ArgumentParser(description='P1tr TNG - IRC bot.')
     argparser.add_argument('-c', '--conf', help='path to configuration file',
             action='store', default='config.cfg')

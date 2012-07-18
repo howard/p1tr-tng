@@ -24,22 +24,22 @@ class Logger(Plugin):
             if 'logger.log' in section and section.getboolean('logger.log'):
                 self._restricted_channels.append(section)
 
-    def privmsg(self, server, channel, user, message):
+    def on_privmsg(self, server, channel, user, message):
         print('[' + server + channel + '] <' + user + '> ' + message)
 
-    def join(self, server, channel):
+    def on_join(self, server, channel):
         print('[' + server + channel + '] ** The bot joined the channel.')
 
-    def userjoin(self, server, channel, nick):
+    def on_userjoin(self, server, channel, nick):
         print('[' + server + channel + '] ** ' + nick + ' joined the channel.')
 
-    def connect(self, server):
+    def on_connect(self, server):
         print('[' + server + '] Connected.')
 
-    def disconnect(self, server):
+    def on_disconnect(self, server):
         print('[' + server + '] Disconnected.')
 
-    def quit(self):
+    def on_quit(self):
         print(' *** BOT TERMINATED *** ')
 
     @command
