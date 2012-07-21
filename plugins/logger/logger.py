@@ -44,9 +44,25 @@ class Logger(Plugin):
     @command
     @require_op
     def disable_logging(self, server, channel, nick, args):
-        pass #TODO
+        """
+        Usage: disable_logging [#CHANNEL] - temporarily disables logging; if a
+        channel is specified, logging for this channel is disabled. Otherwise,
+        the current channel is used. The user must have at least OP in the
+        affected channel.
+        """
+        if len(args) > 0:
+            channel = args[0]
+        self._restricted_channels.append(channel)
 
     @command
     @require_op
     def enable_logging(self, server, channel, nick, args):
-        pass #TODO
+        """
+        Usage: enable_logging [#CHANNEL] - enables logging; if a channel is
+        specified, logging for this channel is enabled. Otherwise, the current
+        channel is used. The user must have at least OP in the affected
+        channel.
+        """
+        if len(args) > 0:
+            channel = args[0]
+        self._restricted_channels.remove(channel)
