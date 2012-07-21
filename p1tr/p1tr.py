@@ -11,6 +11,23 @@ from oyoyo.cmdhandler import DefaultCommandHandler
 from oyoyo import helpers
 from p1tr.plugin import *
 
+def load_config(path=None):
+    """
+    Attempts to load config from the specified path, or if not specified,
+    from the file in the working directory called "config.cfg".
+
+    Raises BotError if there is no config found.
+    """
+    config = configparser.ConfigParser()
+    if path:
+        if config.read(path) == []:
+            raise BotError("No config at the specified path.")
+    else:
+        if config.read('config.cfg') == []:
+            raise BotError("No config in the working directory.")
+    return config
+
+
 class BotError(Exception):
     """Raised on configuration- and non-plugin errors."""
 
@@ -23,27 +40,12 @@ class BotHandler(DefaultCommandHandler):
     """
     commands = dict()
 
-    def load_config(self, path=None):
-        """
-        Attempts to load config from the specified path, or if not specified,
-        from the file in the working directory called "config.cfg".
-
-        Raises BotError if there is no config found.
-        """
-        self.config = configparser.ConfigParser()
-        if path:
-            if self.config.read(path) == []:
-                raise BotError("No config at the specified path.")
-        else:
-            if self.config.read('config.cfg') == []:
-                raise BotError("No config in the working directory.")
-        # Load some config settings; if unavailable, use defaults.
+    def load_config(self, config):
+        self.config = config
         self.home = self.config.get('General', 'home') or ''
         self.global_plugin_blacklist = self.config.get('General',
                 'plugin_blacklist').split(',') or []
-        self.signal_character = self.config.get('General', 'signal_character'
-                ) or '+'
-        
+        self.signal_character = self.config.get('General', 'signal_character') or '+'
 
     def load_plugins(self, extra_path=None):
         """
@@ -196,17 +198,35 @@ def main():
             action='store', default='config.cfg')
     args = argparser.parse_args()
 
-    client = IRCClient(BotHandler, host='irc.freenode.net', port=6667, nick='p1tr-test', connect_cb=on_connect)
-    client.command_handler.load_config(args.conf)
-    client.command_handler.load_plugins()
-    connection = client.connect()
+    clients = dict()
+    connections = dict()
+
+    config = load_config(args.conf)
+
+    for section in config:
+        if section != 'General' and not '|' in section:
+            try:
+                clients[section] = IRCClient(BotHandler,
+                        host=section,
+                        port=config.getint(section, 'port'),
+                        nick=config.get(section, 'nick'),
+                        connect_cb=on_connect)
+                clients[section].command_handler.load_config(config)
+                clients[section].command_handler.load_plugins()
+                connections[section] = clients[section].connect()
+            except (KeyError, configparser.NoOptionError): pass # Not a server.
+            except ValueError as ve:
+                print('Config error - section ' + section + ' will be ignored:')
+                print(str(ve))
+
     while True:
-        try:
-            next(connection) 
-        except KeyboardInterrupt:
-            print('KeyboardInterrupt')
-            break
-    client.command_handler.exit()
+        for client in clients:
+            try:
+                next(connections[client]) 
+            except KeyboardInterrupt:
+                break
+    for client in clients:
+        client.command_handler.exit()
 
 
 
