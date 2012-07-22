@@ -1,6 +1,6 @@
 [General]
 # Specifies the bot's base location. The contents of $home/plugins are loaded
-# and treated as plugins. $home/logs is the storage location for log files.
+# and treated as plugins. $home/log is the storage location for log files.
 # $home/data contains the plugins' persistent storage files.
 # By default, this path is empty, leading to the assumption, that the current
 # working directory is the $home. 

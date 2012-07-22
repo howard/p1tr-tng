@@ -5,12 +5,15 @@ from oyoyo import helpers
 import argparse
 import configparser
 import inspect
+import logging
 import os
 import os.path
+from string import ascii_lowercase
 import sys
 sys.path.insert(0, os.getcwd())
 
 from p1tr.plugin import *
+from p1tr.logwrap import *
 
 def load_config(path=None):
     """
@@ -44,9 +47,13 @@ class BotHandler(DefaultCommandHandler):
     def load_config(self, config):
         self.config = config
         self.home = self.config.get('General', 'home') or ''
+        info('Bot home: ' + self.home)
         self.global_plugin_blacklist = self.config.get('General',
                 'plugin_blacklist').split(',') or []
-        self.signal_character = self.config.get('General', 'signal_character') or '+'
+        info('Global plugin blacklist: ' + str(self.global_plugin_blacklist))
+        self.signal_character = self.config.get('General', 'signal_character') \
+                or '+'
+        info('Signal character: ' + self.signal_character)
 
     def load_plugins(self, extra_path=None):
         """
@@ -68,48 +75,56 @@ class BotHandler(DefaultCommandHandler):
                     os.path.dirname(os.path.realpath(__file__)))[0], 'plugins'))
         except NameError: pass # __file__ is not defined in the python shell.
         paths = list(set(paths)) # Remove duplicates.
+        debug('Plugin directories: ' + str(paths))
 
         for path in paths:
             plugin_dirs = []
             try: # Check if valid path.
                 plugin_dirs = os.listdir(path)
             except OSError:
+                debug(path + ' is not a valid directory.')
                 continue
-            # Consider all directories plugins
+            # Consider all directories plugins as long as they start with
+            # a character.
             for plugin_dir_name in plugin_dirs:
                 plugin_dir = os.path.join(path, plugin_dir_name)
+                if not plugin_dir_name.lower()[0] in ascii_lowercase:
+                    debug(plugin_dir + ' is not a plugin directory.')
+                    continue
                 if not os.path.isdir(plugin_dir): 
-                    print(plugin_dir_name + ' is not directory.')
+                    debug(plugin_dir + ' is not a plugin directory.')
                     continue
                 if plugin_dir_name in self.global_plugin_blacklist:
-                    print(plugin_dir_name + ' is blacklisted.')
+                    debug(plugin_dir_name + ' is blacklisted globally.')
                     continue
                 # Skip plugins if one with the same name has already been loaded
                 if plugin_dir_name in self.plugins.keys():
-                    print(plugin_dir_name + ' is a duplicate.')
+                    debug(plugin_dir_name + ' has been loaded before. Skipping.')
                     continue
                 # Files and globally blacklisted plugins are skipped now.
                 # Loading plugins, if a plugin with the same name has not been
                 # loaded yet.
                 try:
+                    debug('Trying to load plugin ' + plugin_dir_name + '...')
                     this_plugin = load_by_name(plugin_dir_name, self.config)
                     # If this is a meta plugin, add the bot attribute:
                     if hasattr(this_plugin, '__annotations__') and \
                             this_plugin.__annotations__['meta_plugin']:
+                        debug(plugin_dir_name + ' is a meta plugin.')
                         this_plugin.bot = self
                     # Scan for command methods:
                     for member in inspect.getmembers(this_plugin):
                         try:
                             if member[1].__annotations__['command'] == True:
                                 self.commands[member[0]] = this_plugin
-                                print('The plugin "' + plugin_dir_name +
-                                        '" provides the command "' + member[0] + '".')
+                                debug('Registered command ' + member[0] +
+                                        ' for plugin ' + plugin_dir_name)
                         except (AttributeError, KeyError): pass # Not a command
 
                     self.plugins[plugin_dir_name] = this_plugin
-                    print('Plugin ' + plugin_dir_name + ' was loaded.')
+                    info('Plugin ' + plugin_dir_name + ' was loaded.')
                 except PluginError as pe:
-                    print('Plugin ' + plugin_dir_name + 
+                    error('Plugin ' + plugin_dir_name + 
                             ' could not be loaded: ' + str(pe))
 
     def _for_each_plugin(self, func):
@@ -203,10 +218,26 @@ class BotHandler(DefaultCommandHandler):
 def on_connect(client):
     client.command_handler.connected()
     # Join channels listed in the configuration file.
+    debug('Joining startup channels...')
     for section in client.command_handler.config.sections():
         if section.startswith(client.host) and '|' in section:
             client.send('JOIN', '#' + section.split('|')[1])
     # TODO: Auto-op if configured.
+
+
+def read_or_default(config, section, key, default,
+        manipulator=lambda val: val):
+    """
+    Tries to read a certain key from a certain config section. If either section
+    or key cannot be found, the provided default value is returned.
+    Optionally, a multiplicator can be provided to manipulate the config value
+    before returning. If this manipulator fails, the default value is returned.
+    """
+    try:
+        return manipulator(config.get(section, key))
+    except:
+        info('Key ' + key + ' not found in config section ' + section + '.')
+        return default
 
 
 def main():
@@ -219,7 +250,12 @@ def main():
     connections = dict()
 
     config = load_config(args.conf)
+    
+    loglevel = logging.ERROR
+    set_loglevel(read_or_default(config, 'General', 'loglevel', logging.ERROR,
+        lambda val: getattr(logging, val)))
 
+    info('Connecting to servers...')
     for section in config:
         if section != 'General' and not '|' in section:
             try:
@@ -233,17 +269,18 @@ def main():
                 connections[section] = clients[section].connect()
             except (KeyError, configparser.NoOptionError): pass # Not a server.
             except ValueError as ve:
-                print('Config error - section ' + section + ' will be ignored:')
-                print(str(ve))
+                info('Config section ' + section + ' will be ignored: ' + str(ve))
 
+    info('Startup complete.')
     while True:
         for client in clients:
             try:
                 next(connections[client]) 
-            except KeyboardInterrupt:
+            except (StopIteration, KeyboardInterrupt):
                 break
     for client in clients:
         client.command_handler.exit()
+    info('All clients terminated. Goodbye!')
 
 
 
