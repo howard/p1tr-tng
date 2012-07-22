@@ -63,3 +63,14 @@ class Unix(Plugin):
             return get_command_output('morse -d -- ' + text)
         if params[0] == 'encode':
             return get_command_output('morse -s -- ' + text)
+
+    @command
+    def number(self, server, channel, nick, params):
+        """Usage: number NUMBER - translates arabic numerals to english text."""
+        if len(params) < 1:
+            return clean_string(self.morse.__doc__)
+        try:
+            return get_command_output('number -l ' + str(int(params[0])))
+        except ValueError:
+            return 'This is not a real number.'
+
