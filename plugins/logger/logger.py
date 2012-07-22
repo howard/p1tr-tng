@@ -10,10 +10,9 @@ class Logger(Plugin):
     configuration file.
     """
     
-    _restricted_channels = []
-
     def __init__(self):
         Plugin.__init__(self)
+        self._restricted_channels = []
 
     def load_settings(self, config):
         """
@@ -25,46 +24,56 @@ class Logger(Plugin):
                 self._restricted_channels.append(section)
 
     def on_privmsg(self, server, channel, user, message):
+        if channel in self._restricted_channels: return
         plain('<' + user.split('!')[0] + '> ' + message,
                 server=server, channel=channel)
 
     def on_join(self, server, channel):
+        if channel in self._restricted_channels: return
         plain(' ** The bot joined the channel.', server=server, channel=channel)
 
     def on_part(self, server, channel, message):
+        if channel in self._restricted_channels: return
         plain(' ** The bot left the channel.', server=server, channel=channel)
 
     def on_modechanged(self, server, channel):
-        #TODO
-        pass
+        if channel in self._restricted_channels: return
+        pass #TODO
 
     def on_topicchanged(self, server, channel, nick, oldtopic, newtopic):
+        if channel in self._restricted_channels: return
         plain(' ** Topic changed; old: ' + oldtopic, server=server,
                 channel=channel)
         plain(' ** Topic changed; new: ' + newtopic, server=server,
                 channel=channel)
 
     def on_kicked(self, server, channel, reason):
+        if channel in self._restricted_channels: return
         plain(' ** Bot was kicked: ' + reason or 'no reason', server=server,
                 channel=channel)
 
     def on_userjoin(self, server, channel, nick):
+        if channel in self._restricted_channels: return
         plain(' ** ' + nick + ' joined the channel.', server=server,
                 channel=channel)
 
     def on_userpart(self, server, channel, nick, message):
+        if channel in self._restricted_channels: return
         plain(' ** ' + nick + ' left the channel: ' + message or 
                 'no part message', server=server, channel=channel)
 
     def on_userkicked(self, server, channel, nick, reason):
+        if channel in self._restricted_channels: return
         plain(' ** ' + nick + ' was kicked: ' + reason or 'no reason',
                 server=server, channel=channel)
 
     def on_userrenamed(self, server, channel, oldnick, newnick):
+        if channel in self._restricted_channels: return
         plain(' ** ' + oldnick + ' is now known as ' + newnick, server=server,
                 channel=channel)
 
     def on_useraction(self, server, channel, nick, message):
+        if channel in self._restricted_channels: return
         plain(' * ' + nick.split('!')[0] + ' ' + message, server=server,
                 channel=channel)
 
@@ -89,6 +98,7 @@ class Logger(Plugin):
         if len(args) > 0:
             channel = args[0]
         self._restricted_channels.append(channel)
+        return 'Logging has been disabled in ' + channel + '.'
 
     @command
     @require_op
@@ -102,3 +112,4 @@ class Logger(Plugin):
         if len(args) > 0:
             channel = args[0]
         self._restricted_channels.remove(channel)
+        return 'Logging has been enabled in ' + channel + '.'
