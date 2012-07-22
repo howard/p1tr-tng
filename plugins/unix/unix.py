@@ -74,3 +74,21 @@ class Unix(Plugin):
         except ValueError:
             return 'This is not a real number.'
 
+    @command
+    def caesar(self, server, channel, nick, params):
+        """
+        Usage: caesar ROTATION MESSAGE - encrypts a MESSAGE using the caesar
+        cipher. ROTATION is the number by which the letters in MESSAGE are
+        shifted.
+        """
+        if len(params) < 2:
+            return clean_string(self.caesar.__doc__)
+        rotation = 0
+        try:
+            rotation = str(int(params[0]))
+        except ValueError:
+            return 'Invalid rotation. Not a real number.'
+        message = ' '.join(params[1:])
+        if not self._morse_pattern.match(message):
+            return 'Illegal characters in input text.'
+        return get_command_output('echo ' + message + ' | caesar ' + rotation)
