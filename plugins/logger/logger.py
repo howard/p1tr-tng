@@ -20,8 +20,10 @@ class Logger(Plugin):
         context-sensitive.
         """
         for section in config:
-            if 'logger.log' in section and section.getboolean('logger.log'):
-                self._restricted_channels.append(section)
+            if '|' in section:
+                if not config.getboolean(section, 'logger.log'):
+                    self._restricted_channels.append('#' + 
+                            section.split('|')[1])
 
     def on_privmsg(self, server, channel, user, message):
         if channel in self._restricted_channels: return
@@ -97,8 +99,10 @@ class Logger(Plugin):
         """
         if len(args) > 0:
             channel = args[0]
+        if channel in self._restricted_channels:
+            return 'Logging is already disabled in this channel.'
         self._restricted_channels.append(channel)
-        return 'Logging has been disabled in ' + channel + '.'
+        return 'Logging has been disabled.'
 
     @command
     @require_op
@@ -112,4 +116,4 @@ class Logger(Plugin):
         if len(args) > 0:
             channel = args[0]
         self._restricted_channels.remove(channel)
-        return 'Logging has been enabled in ' + channel + '.'
+        return 'Logging has been enabled.'
