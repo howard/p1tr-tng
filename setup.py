@@ -15,7 +15,7 @@ setup(
         author_email='chris.ortner@gmail.com',
         keywords='plugin irc bot',
         license='MIT',
-        url='https://github.com/howard/p1tr',
+        url='https://github.com/howard/p1tr-tng',
         install_requires=['oyoyo'],
         include_package_data=True,
         packages=find_packages(),
