@@ -94,7 +94,7 @@ def get_logger(name):
     file_handler.setLevel(DEBUG)
     file_handler.setFormatter(fmt)
     logger.addHandler(file_handler)
-    if _to_stderr:
+    if _to_stderr and not '#' in name: # Don't show console logs for channels
         stream_handler = logging.StreamHandler()
         stream_handler.setLevel(DEBUG)
         stream_handler.setFormatter(fmt)
@@ -115,11 +115,12 @@ def log(severity, message, **kwargs):
             getattr(get_logger(kwargs['plugin']), severity)(message)
             return
         if 'server' in kwargs and 'channel' in kwargs:
-            getattr(get_logger(kwargs['server'] + kwargs['channel']),
-                    severity)(message)
+            getattr(get_logger(kwargs['server'].split(':')[0] +
+                kwargs['channel']), severity)(message)
             return
         if 'server' in kwargs:
-            getattr(get_logger(kwargs['server']), severity)(message)
+            getattr(get_logger(kwargs['server'].split(':')[0]),
+                    severity)(message)
             return
         # All remaining messages are sent to the global log.
         getattr(get_logger('__global__'), severity)(message)

@@ -1,3 +1,7 @@
+from oyoyo.client import IRCClient
+from oyoyo.cmdhandler import DefaultCommandHandler
+from oyoyo import helpers
+
 import argparse
 import configparser
 import inspect
@@ -6,9 +10,6 @@ import os.path
 import sys
 sys.path.insert(0, os.getcwd())
 
-from oyoyo.client import IRCClient
-from oyoyo.cmdhandler import DefaultCommandHandler
-from oyoyo import helpers
 from p1tr.plugin import *
 
 def load_config(path=None):
@@ -120,6 +121,11 @@ class BotHandler(DefaultCommandHandler):
             func(self.plugins[plugin_name])
 
     def privmsg(self, nick, chan, msg):
+        # Check if this is actually a PRIVMSG, not an action.
+        if msg.decode('utf-8').startswith('\x01ACTION'):
+            self.action(nick, chan, msg)
+            return
+        # Regular PRIVMSG from here onwarts
         self._for_each_plugin(lambda plugin:
                 plugin.on_privmsg(self.client.host + ':' + str(self.client.port),
                     chan.decode('utf-8'), nick.decode('utf-8'),
@@ -154,6 +160,9 @@ class BotHandler(DefaultCommandHandler):
             # If text was returned, send it as a response.
             if isinstance(ret_val, str) or isinstance(ret_val, bytes):
                 self.client.send('PRIVMSG', respond_to, ':' + ret_val)
+                self.commands[cmd].on_privmsg(self.client.host + ':' +
+                        str(self.client.port), respond_to, self.client.nick,
+                        ret_val)
         except (ValueError, KeyError): pass
 
     def join(self, nick, chan):
@@ -170,6 +179,14 @@ class BotHandler(DefaultCommandHandler):
     def connected(self):
         self._for_each_plugin(lambda plugin:
                 plugin.on_connect(self.client.host + ':' + str(self.client.port)))
+
+    def action(self, nick, chan, msg):
+        """Called on actions (you usually do those with /me)"""
+        self._for_each_plugin(lambda plugin:
+                plugin.on_useraction(self.client.host + ':' +
+                    str(self.client.port), chan.decode('utf-8'),
+                    nick.decode('utf-8'),
+                    ' '.join(msg.decode('utf-8').split()[1:])))
 
     def quit(self, message):
         """Called on disconnect."""

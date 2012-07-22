@@ -1,4 +1,5 @@
 from p1tr.plugin import *
+from p1tr.logwrap import plain, info
 
 class Logger(Plugin):
     """
@@ -24,22 +25,57 @@ class Logger(Plugin):
                 self._restricted_channels.append(section)
 
     def on_privmsg(self, server, channel, user, message):
-        print('[' + server + channel + '] <' + user + '> ' + message)
+        plain('<' + user.split('!')[0] + '> ' + message,
+                server=server, channel=channel)
 
     def on_join(self, server, channel):
-        print('[' + server + channel + '] ** The bot joined the channel.')
+        plain(' ** The bot joined the channel.', server=server, channel=channel)
+
+    def on_part(self, server, channel, message):
+        plain(' ** The bot left the channel.', server=server, channel=channel)
+
+    def on_modechanged(self, server, channel):
+        #TODO
+        pass
+
+    def on_topicchanged(self, server, channel, nick, oldtopic, newtopic):
+        plain(' ** Topic changed; old: ' + oldtopic, server=server,
+                channel=channel)
+        plain(' ** Topic changed; new: ' + newtopic, server=server,
+                channel=channel)
+
+    def on_kicked(self, server, channel, reason):
+        plain(' ** Bot was kicked: ' + reason or 'no reason', server=server,
+                channel=channel)
 
     def on_userjoin(self, server, channel, nick):
-        print('[' + server + channel + '] ** ' + nick + ' joined the channel.')
+        plain(' ** ' + nick + ' joined the channel.', server=server,
+                channel=channel)
+
+    def on_userpart(self, server, channel, nick, message):
+        plain(' ** ' + nick + ' left the channel: ' + message or 
+                'no part message', server=server, channel=channel)
+
+    def on_userkicked(self, server, channel, nick, reason):
+        plain(' ** ' + nick + ' was kicked: ' + reason or 'no reason',
+                server=server, channel=channel)
+
+    def on_userrenamed(self, server, channel, oldnick, newnick):
+        plain(' ** ' + oldnick + ' is now known as ' + newnick, server=server,
+                channel=channel)
+
+    def on_useraction(self, server, channel, nick, message):
+        plain(' * ' + nick.split('!')[0] + ' ' + message, server=server,
+                channel=channel)
 
     def on_connect(self, server):
-        print('[' + server + '] Connected.')
+        info('Connected to the server.', server=server)
 
     def on_disconnect(self, server):
-        print('[' + server + '] Disconnected.')
+        info('Disconnected from the server.', server=server)
 
     def on_quit(self):
-        print(' *** BOT TERMINATED *** ')
+        info('Terminating plugins.')
 
     @command
     @require_op
