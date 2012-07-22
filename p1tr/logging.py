@@ -11,6 +11,8 @@ of keyword arguments is supported:
     the specified plugin's log.
 By default, if no keyword arguments are specified, the message goes to the
 global bot logfile.
+
+Keep in mind that when logging to a channel, the severity is not displayed.
 """
 
 import logging
@@ -27,6 +29,9 @@ _logdir = 'log'
 _loglevel = logging.ERROR
 _to_stderr = True
 _loggers = dict()
+
+_default_format = logging.Formatter('%(asctime)s %(levelname)s\t%(message)s')
+_channel_format = logging.Formatter('%(asctime)s %(message)s')
 
 def _clear_loggers():
     """
@@ -60,7 +65,7 @@ def set_loglevel(loglevel):
     global _loglevel
     _loglevel = loglevel
     for logger in _loggers:
-        logger.setLevel(_loglevel)
+        _loggers[logger].setLevel(_loglevel)
 
 def set_console_output(value):
     """
@@ -74,7 +79,7 @@ def set_console_output(value):
 
 def get_logger(name):
     """Fetches an existing logger or creates a new one, if it doesn't exist."""
-    global _loglevel, _logdir, _to_stderr
+    global _loglevel, _logdir, _to_stderr, _default_format, _channel_format
     if name in _loggers:
         return _loggers[name]
     # Doesn't exist. Create new one and configure it.
@@ -84,12 +89,15 @@ def get_logger(name):
         path = os.path.join(_logdir, 'global.log')
     else:
         path = os.path.join(_logdir, name + '.log')
+    fmt = _channel_format if '#' in name else _default_format
     file_handler = logging.FileHandler(path)
     file_handler.setLevel(DEBUG)
+    file_handler.setFormatter(fmt)
     logger.addHandler(file_handler)
     if _to_stderr:
         stream_handler = logging.StreamHandler()
         stream_handler.setLevel(DEBUG)
+        stream_handler.setFormatter(fmt)
         logger.addHandler(stream_handler)
     _loggers[name] = logger
     return _loggers[name]
@@ -137,3 +145,9 @@ def error(message, **kwargs):
 def critical(message, **kwargs):
     """Critical error prevents continuous operation."""
     log('critical', message, **kwargs)
+
+def plain(message, **kwargs):
+    if not 'server' in kwargs or not 'channel' in kwargs \
+            or 'plugin' in kwargs:
+        raise ValueError('May only be used for channel logging.')
+    critical(message, **kwargs)
