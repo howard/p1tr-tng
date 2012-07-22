@@ -28,14 +28,27 @@ _loglevel = logging.ERROR
 _to_stderr = True
 _loggers = dict()
 
+def _clear_loggers():
+    """
+    Terminates the existing loggers, so they can be re-created the next time
+    they are needed. This is required in order to allow changing the log
+    directory and the console output option to take effect.
+    """
+    # Usually, shutdown should only be called on application exit, as it closes
+    # all handlers. In this case, however, since all loggers are re-created, it
+    # doesn't matter.
+    shutdown()
+    _loggers = dict()
+
 def set_logdir(path):
     """
-    All logs are written to the directory specified in the parameter. This
-    function must be called before any loggers are created, otherwise the
-    change will have no effect.
+    All logs are written to the directory specified in the parameter. Calling
+    this function will re-create all loggers as soon as they are needed the next
+    time, otherwise the change would be without effect.
     """
     global _logdir
     _logdir = path
+    _clear_loggers()
         
 def set_loglevel(loglevel):
     """
@@ -52,11 +65,12 @@ def set_loglevel(loglevel):
 def set_console_output(value):
     """
     Enables or disables console output of the log messages. The log level
-    applies. This function must be called before any loggers are created,
-    otherwise the change will have no effect for the existing loggers.
+    applies. Calling this function will re-create all loggers as soon as they
+    are needed the next time, otherwise the change would be without effect.
     """
     global _to_stderr
     _to_stderr = value
+    _clear_loggers()
 
 def get_logger(name):
     """Fetches an existing logger or creates a new one, if it doesn't exist."""
