@@ -3,6 +3,7 @@ Plugin base class and related utilities.
 """
 import glob
 import os.path
+from logwrap import warning, critical
 
 def load_by_name(plugin_name, config):
     """
@@ -43,6 +44,14 @@ def load_by_name(plugin_name, config):
 
 
 # Decorators:
+def _add_annotation(decoratable, key, value):
+    """Adds value at key in decoratable's __annotations__ attribute."""
+    try:
+        decoratable.__annotations__[key] = value
+    except AttributeError:
+        decoratable.__annotations__ = {key: value}
+    return decoratable
+
 def meta_plugin(a_class):
     """
     Plugin classes decorated with this item receive a special attribute after
@@ -51,46 +60,22 @@ def meta_plugin(a_class):
     all plugin instances. Use with caution and only if absolutely necessary.
     You could break a lot.
     """
-    try:
-        a_class.__annotations__['meta_plugin'] = True
-    except AttributeError:
-        a_class.__annotations__ = {'meta_plugin': True}
-    return a_class
+    return _add_annotation(a_class, 'meta_plugin', True)
 
 def command(func):
-    try:
-        func.__annotations__['command'] = True
-    except AttributeError:
-        func.__annotations__ = {'command': True}
-    return func
+    return _add_annotation(func, 'command', True)
 
 def require_master(func):
-    try:
-        func.__annotations__['require_master'] = True
-    except AttributeError:
-        func.__annotations__ = {'require_master': True}
-    return func
+    return _add_annotation(func, 'require_master', True)
+
+def require_owner(func):
+    return _add_annotation(func, 'require_owner', True)
 
 def require_op(func):
-    try:
-        func.__annotations__['require_op'] = True
-    except AttributeError:
-        func.__annotations__ = {'require_op': True}
-    return func
+    return _add_annotation(func, 'require_op', True)
 
 def require_voice(func):
-    try:
-        func.__annotations__['require_voice'] = True
-    except AttributeError:
-        func.__annotations__ = {'require_voice': True}
-    return func
-
-def require_presence(func):
-    try:
-        func.__annotations__['require_presence'] = True
-    except AttributeError:
-        func.__annotations__ = {'require_presence': True}
-    return func
+    return _add_annotation(func, 'require_voice', True)
 
     
 # Some utility functions
@@ -214,3 +199,51 @@ class Plugin:
         before reloading the plugin.
         """
 
+class AuthorizationProvider(Plugin):
+    """
+    Template for authorization-providing plugins. Provides common functionality,
+    such as a custom settings loader, which fetches the bot master from the
+    config file.
+    """
+
+    def load_settings(self, config):
+        try:
+            self.master = config.get('General', 'master')
+        except:
+            warning('No bot master specified in config file.')
+    
+    def authorize_master(self, server, channel, nick):
+        """
+        Bot master authorization. A simple implementation might be checking the
+        nick. To be implemented by the actual authorization providers.
+        """
+        critical('Master authorizer not implemented!')
+
+    def authorize_owner(self, server, channel, nick):
+        """
+        Owner of the channel. Usually a unique rank, but depends on the
+        authorization provider, which is to be implemented.
+        """
+        critical('Owner authorizer not implemented.')
+
+    def authorize_op(self, server, channel, nick):
+        """
+        Rank of a channel-wide authority. Not necessarily bound to the IRC
+        protocol's OP status. To be implemented by the actual authorization
+        providers.
+        """
+        critical('OP authorizer not implemented!')
+
+    def authorize_hop(self, server, channel, nick):
+        """
+        Half-OP. Ranked above voice. To be implemented by the 
+        actual authorization providers.
+        """
+        critical('Half-OP authorizer not implemented!')
+
+    def authorize_voice(self, server, channel, nick):
+        """
+        Privileged user, but usually without administrative abilities. To be
+        implemented by the actual authorization providers.
+        """
+        critical('Voice authorizer not implemented!')
