@@ -79,6 +79,11 @@ class Logger(Plugin):
         plain(' * ' + nick.split('!')[0] + ' ' + message, server=server,
                 channel=channel)
 
+    def on_notice(self, server, channel, nick, message):
+        if channel in self._restricted_channels: return
+        info(' * NOTICE from ' + nick.split('!')[0] + ': ' + message,
+                server=server)
+
     def on_connect(self, server):
         info('Connected to the server.', server=server)
 

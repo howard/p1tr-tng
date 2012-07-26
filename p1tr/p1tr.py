@@ -203,6 +203,14 @@ class BotHandler(DefaultCommandHandler):
                     nick.decode('utf-8'),
                     ' '.join(msg.decode('utf-8').split()[1:])))
 
+    def notice(self, nick, chan, msg):
+        """Usually issued by the server or services."""
+        self._for_each_plugin(lambda plugin:
+                plugin.on_notice(self.client.host + ':' +
+                    str(self.client.port), chan.decode('utf-8'),
+                    nick.decode('utf-8'), msg.decode('utf-8')))
+
+
     def quit(self, message):
         """Called on disconnect."""
         self._for_each_plugin(lambda plugin:
