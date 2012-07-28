@@ -206,40 +206,50 @@ class BotHandler(DefaultCommandHandler):
             # If command requires authorization, delegate execution to the
             # authorization provider, if available.
             server_str = self.client.host + ':' + str(self.client.port)
-            if self.auth_provider:
-                if has_annotation(self.commands[cmd], cmd, 'require_master'):
-                    self.auth_provider.authorize_master(server_str,
-                            chan.decode('utf-8'), nick.decode('utf-8'),
-                            msg, self.commands[cmd], cmd)
-                elif has_annotation(self.commands[cmd], cmd, 'require_owner'):
-                    self.auth_provider.authorize_owner(server_str,
-                            chan.decode('utf-8'), nick.decode('utf-8'),
-                            msg, self.commands[cmd], cmd)
-                elif has_annotation(self.commands[cmd], cmd, 'require_op'):
-                    self.auth_provider.authorize_op(server_str,
-                            chan.decode('utf-8'), nick.decode('utf-8'),
-                            msg, self.commands[cmd], cmd)
-                elif has_annotation(self.commands[cmd], cmd, 'require_hop'):
-                    self.auth_provider.authorize_hop(server_str,
-                            chan.decode('utf-8'), nick.decode('utf-8'),
-                            msg, self.commands[cmd], cmd)
-                elif has_annotation(self.commands[cmd], cmd, 'require_voice'):
-                    self.auth_provider.authorize_voice(server_str,
-                            chan.decode('utf-8'), nick.decode('utf-8'),
-                            msg, self.commands[cmd], cmd)
-                elif has_annotation(self.commands[cmd], cmd,
-                        'require_authenticated'):
-                    self.auth_provider.authorize_authenticated(server_str,
-                            chan.decode('utf-8'), nick.decode('utf-8'),
-                            msg, self.commands[cmd], cmd)
+            if self.auth_provider and \
+                    has_annotation(self.commands[cmd], cmd, 'require_master'):
+                self.auth_provider.authorize_master(server_str,
+                        chan.decode('utf-8'), nick.decode('utf-8'),
+                        msg, self.commands[cmd], cmd)
                 return
-            elif has_annotation(self.commands[cmd], cmd, 'require_master'):
+            elif self.auth_provider and \
+                    has_annotation(self.commands[cmd], cmd, 'require_owner'):
+                self.auth_provider.authorize_owner(server_str,
+                        chan.decode('utf-8'), nick.decode('utf-8'),
+                        msg, self.commands[cmd], cmd)
+                return
+            elif self.auth_provider and \
+                    has_annotation(self.commands[cmd], cmd, 'require_op'):
+                self.auth_provider.authorize_op(server_str,
+                        chan.decode('utf-8'), nick.decode('utf-8'),
+                        msg, self.commands[cmd], cmd)
+                return
+            elif self.auth_provider and \
+                    has_annotation(self.commands[cmd], cmd, 'require_hop'):
+                self.auth_provider.authorize_hop(server_str,
+                        chan.decode('utf-8'), nick.decode('utf-8'),
+                        msg, self.commands[cmd], cmd)
+                return
+            elif self.auth_provider and \
+                    has_annotation(self.commands[cmd], cmd, 'require_voice'):
+                self.auth_provider.authorize_voice(server_str,
+                        chan.decode('utf-8'), nick.decode('utf-8'),
+                        msg, self.commands[cmd], cmd)
+                return
+            elif self.auth_provider and \
+                    has_annotation(self.commands[cmd], cmd,
+                            'require_authenticated'):
+                self.auth_provider.authorize_authenticated(server_str,
+                        chan.decode('utf-8'), nick.decode('utf-8'),
+                        msg, self.commands[cmd], cmd)
+                return
+            elif not self.auth_provider and \
+                    has_annotation(self.commands[cmd], cmd, 'require_master'):
                 # Even if no auth provider is available, restrict master
                 # commands to users with a fitting nick. This is the least
                 # we can do for security.
                 if nick.decode('utf-8').split('!')[0] != self.master: return
-            # No auth provider available, or not a privileged command. Executee
-            # as usual:
+            # Not a privileged command. Handle as usual.
             ret_val = getattr(self.commands[cmd], cmd)(server_str,
                     chan.decode('utf-8'), nick.decode('utf-8'), args)
             # If text was returned, send it as a response.
