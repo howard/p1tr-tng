@@ -120,5 +120,6 @@ class Logger(Plugin):
         """
         if len(args) > 0:
             channel = args[0]
-        self._restricted_channels.remove(channel)
+        if channel in self._restricted_channels:
+            self._restricted_channels.remove(channel)
         return 'Logging has been enabled.'
