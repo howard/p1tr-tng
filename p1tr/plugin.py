@@ -235,7 +235,7 @@ class AuthorizationProvider(Plugin):
 
     def execute(self, server, channel, nick, message, plugin, cmd):
         """Executes a plugin command."""
-        ret_val = getattr(plugin, cmd)(server, channel, nick, message.split())
+        ret_val = getattr(plugin, cmd)(server, channel, nick, message)
         if isinstance(ret_val, str) or isinstance(ret_val, bytes):
             self.bot.client.send('PRIVMSG', channel, ':' + ret_val)
 
