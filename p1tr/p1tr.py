@@ -294,7 +294,7 @@ class BotHandler(DefaultCommandHandler):
         """Called when a user renames themselves."""
         self._for_each_plugin(lambda plugin:
                 plugin.on_userrenamed(self.client.host + ':' +
-                    str(self.client.port), nick.decode('utf-8'),
+                    str(self.client.port), oldnick.decode('utf-8'),
                     newnick.decode('utf-8')))
 
     def mode(self, nick, chan, msg):

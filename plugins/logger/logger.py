@@ -70,7 +70,7 @@ class Logger(Plugin):
                 server=server, channel=channel)
 
     def on_userrenamed(self, server, oldnick, newnick):
-        plain(' ** %s is now known as %s.' % (oldnick.split('!')[0], newnick),
+        info(' ** %s is now known as %s.' % (oldnick.split('!')[0], newnick),
                 server=server)
 
     def on_useraction(self, server, channel, nick, message):
