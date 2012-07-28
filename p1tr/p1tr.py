@@ -290,6 +290,13 @@ class BotHandler(DefaultCommandHandler):
                     str(self.client.port), chan.decode('utf-8'),
                     nick.decode('utf-8'), msg.decode('utf-8')))
 
+    def nick(self, oldnick, newnick):
+        """Called when a user renames themselves."""
+        self._for_each_plugin(lambda plugin:
+                plugin.on_userrenamed(self.client.host + ':' +
+                    str(self.client.port), nick.decode('utf-8'),
+                    newnick.decode('utf-8')))
+
     def mode(self, nick, chan, msg):
         """Called on MODE responses."""
         self._for_each_plugin(lambda plugin:
@@ -307,6 +314,8 @@ class BotHandler(DefaultCommandHandler):
         """Called on bot termination."""
         self._for_each_plugin(lambda plugin:
                 plugin.on_quit())
+        self._for_each_plugin(lambda plugin:
+                plugin.close_all_storages())
         
     def __unhandled__(self, cmd, *args):
         """Unhandled commands go to this handler."""

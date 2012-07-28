@@ -69,10 +69,9 @@ class Logger(Plugin):
         plain(' ** ' + nick + ' was kicked: ' + reason or 'no reason',
                 server=server, channel=channel)
 
-    def on_userrenamed(self, server, channel, oldnick, newnick):
-        if channel in self._restricted_channels: return
-        plain(' ** ' + oldnick + ' is now known as ' + newnick, server=server,
-                channel=channel)
+    def on_userrenamed(self, server, oldnick, newnick):
+        plain(' ** %s is now known as %s.' % (oldnick.split('!')[0], newnick),
+                server=server)
 
     def on_useraction(self, server, channel, nick, message):
         if channel in self._restricted_channels: return

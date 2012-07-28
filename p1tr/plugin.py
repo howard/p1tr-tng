@@ -3,6 +3,7 @@ Plugin base class and related utilities.
 """
 import glob
 import os.path
+import shelve
 from p1tr.logwrap import warning, critical
 
 def load_by_name(plugin_name, config):
@@ -118,14 +119,21 @@ class Plugin:
     Plugin, is used to describe the plugin in the help message.
     """
     
-    """
-    Persistent key-value storage, is automatically populated on plugin load.
-    """
-    _storage = dict();
+    """Registry of all open storages."""
+    _storages = {}
+
     """
     Plugin-specific settings; meant to be accessible to the plugin container.
     """
-    _settings = dict();
+    _settings = dict()
+
+    """
+    Path at which the plugin may store data. Usually in the data/pluginName
+    directory under the bot home directory. This property is to be set at plugin
+    instantiation. Otherwise, the current working directory will be used as a
+    fallback.
+    """
+    data_path = ''
 
     def __init__(self):
         """
@@ -150,6 +158,96 @@ class Plugin:
             for key in section:
                 if __name__.lower() + '.' in key:
                     settings[__name__.__len__() + 1:] = section[key]
+    
+    def load_storage(self, identifier):
+        """
+        Persistent storage mechanism for P1tr plugins. Calling this method
+        returns a dictionary-like key-value-storage, backed by Python's shelve
+        module. Pretty much anything can be serialized using this mechanism. For
+        details, refer to the documentation of the shelve module.
+        
+        The pickle protocol version 3 is used, which was introduced with Python 3
+        and is not backward compatible.
+
+        The file behind this storage instance is stored in the file at
+        $home/data/$plugin/$identifier.db, whereas $home is the bot home
+        directory, $plugin the name of this plugin, and $identifier the
+        parameter supplied at the method call. A plugin can have an arbitrary
+        number of storage files.
+
+        You can explicitly save the storage by calling the save_storage method.
+        All storages are automatically saved and closed on termination of the
+        plugin.
+        """
+        path = os.path.join(self.data_path, identifier + '.dat')
+        try:
+            storage = shelve.open(path, protocol=3, writeback=True)
+            self._storages[identifier] = storage
+            debug('Loaded storage at: ' + path)
+            return storage
+        except Exception as e:
+            error('Unable to load storage file at ' + path + ':',
+                    plugin=self.__class__.__name__.lower())
+            error(str(e))
+            raise
+
+    def save_storage(self, identifier=None, storage=None):
+        """
+        Saves storage data. Identify the storage you want to save either by
+        supplying the identifier or the storage object itself. Are both
+        provided, the identifier will be prefered over the storage object.
+        """
+        if identifier:
+            if not identifier in self._storages:
+                error('Storage with the identifier "' + identifier +
+                        '" not found.', plugin=self.__class__.__name__.lower())
+            else:
+                self._storages[identifier].sync()
+                debug('Storage "' + identifier + '" saved.',
+                        plugin=self.__class__.__name__.lower())
+        elif storage:
+            debug('Storage "' + str(storage) + '" saved.',
+                     plugin=self.__class__.__name__.lower())
+        else:
+            raise ValueError('Specify identifier or storage for saving.')
+    
+    def close_storage(self, identifier=None, storage=None):
+        """
+        Closes a storage. Identify the storage you want to close either by
+        supplying the identifier or the storage object itself. Are both
+        provided, the identifier will be prefered over the storage object.
+        """
+        if identifier:
+            if not identifier in self._storages:
+                error('Storage with the identifier "' + identifier +
+                        '" not found.', plugin=self.__class__.__name__.lower())
+            else:
+                self._storages[identifier].close()
+                del self._storages[identifier]
+                debug('Storage "' + identifier + '" closed.',
+                        plugin=self.__class__.__name__.lower())
+        elif storage:
+            storage.close()
+            # In case the storage is referenced in self._storages, remove it to
+            # avoid redundant closing on plugin termination.
+            identifier = [key for key, value in self._storages.iteritems()
+                    if value == storage]
+            if len(identifier) > 0:
+                del self._storages[identifier[0]]
+            debug('Storage "' + str(storage) + '" closed.',
+                    plugin=self.__class__.__name__.lower())
+        else:
+            raise ValueError('Specify identifier or storage for closing.')
+
+    def close_all_storages(self):
+        """
+        This method is automatically called on plugin termination by the plugin
+        container (the bot). It is not intended for being called or overridden
+        by the plugin itself.
+        """
+        for storage in self._storages:
+            self._storages[storage].sync()
+            self._storages[storage].close()
 
     def on_privmsg(self, server, channel, user, message):
         """
@@ -190,7 +288,7 @@ class Plugin:
     def on_userkicked(self, server, channel, nick, reason):
         """Triggered when a user is kicked from a channel."""
 
-    def on_userrenamed(self, server, channel, oldnick, newnick):
+    def on_userrenamed(self, server, oldnick, newnick):
         """Triggered whenever a user changes his name."""
 
     def on_useraction(self, server, channel, nick, message):
