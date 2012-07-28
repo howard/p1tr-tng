@@ -11,7 +11,7 @@ class Seen(Plugin):
         Plugin.__init__(self)
         # Storage format: key = username,
         # value = (timestamp, channel, lastActivity)
-        self.memory = {}
+        self.memory = self.load_storage('memory')
 
     @command
     def seen(self, server, channel, nick, params):

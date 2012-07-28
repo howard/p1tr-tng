@@ -4,7 +4,7 @@ Plugin base class and related utilities.
 import glob
 import os.path
 import shelve
-from p1tr.logwrap import warning, critical
+from p1tr.logwrap import *
 
 def load_by_name(plugin_name, config):
     """
@@ -179,7 +179,7 @@ class Plugin:
         All storages are automatically saved and closed on termination of the
         plugin.
         """
-        path = os.path.join(self.data_path, identifier + '.dat')
+        path = os.path.join(self.data_path, identifier)
         try:
             storage = shelve.open(path, protocol=3, writeback=True)
             self._storages[identifier] = storage

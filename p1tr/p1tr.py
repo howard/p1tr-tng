@@ -384,14 +384,15 @@ def main():
                 info('Config section ' + section + ' will be ignored: ' + str(ve))
 
     info('Startup complete.')
-    while True:
-        for client in clients:
-            try:
+    running = True
+    try:
+        while running:
+            for client in clients:
                 next(connections[client]) 
-            except (StopIteration, KeyboardInterrupt):
-                break
+    except KeyboardInterrupt:
+        running = False
     for client in clients:
-        client.command_handler.exit()
+        clients[client].command_handler.exit()
     info('All clients terminated. Goodbye!')
 
 
