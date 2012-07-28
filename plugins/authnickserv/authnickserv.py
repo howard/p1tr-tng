@@ -27,13 +27,18 @@ class Authnickserv(AuthorizationProvider):
     this queue for further processing.
 
     There is no queue for the master rank, since this can be checked instantly.
+
+    If an authorization attempt fails, the tuple is moved to the next higher
+    queue to check if the user has a rank higher than the required minimum to
+    execute the command.
     """
     _command_queues = {
             'authenticated': {},
             'voice': {},
             'half-op': {},
             'op': {},
-            'owner': {}
+            'owner': {},
+            'master': {}
             }
 
     def _enqueue(self, queue_name, next_queue, plugin, command, server, channel,
@@ -66,25 +71,45 @@ class Authnickserv(AuthorizationProvider):
             self._respond_denial(server, channel, nick)
 
     def authorize_owner(self, server, channel, nick, message, plugin, cmd):
-        """Nick must own the channel by having the founder flag."""
+        """
+        Nick must own the channel by having the founder flag. This only works if
+        the bot is identified, because ChanServ (at least on FreeNode) entrusts
+        that info only to identified users.
+        """
+        #TODO
 
     def authorize_op(self, server, channel, nick, message, plugin, cmd):
         """
         Nick must be either OP in the channel, or able to become OP any time
-        because of flags specified in ChanServ's ACCESS LIST.
+        because of flags specified in ChanServ's ACCESS LIST. The latter
+        only works if the bot is identified, because ChanServ (at least on
+        FreeNode) entrusts that info only to identified users.
         """
+        self._enqueue('authenticated', 'op', plugin, cmd, server, channel, nick,
+                message)
+        ns(self.bot.client, 'ACC', nick.split('!')[0])
 
     def authorize_hop(self, server, channel, nick, message, plugin, cmd):
         """
         Nick must be either Half-OP in the channel, or able to become Half-OP
-        any time because of flags specified in ChanServ's ACCESS LIST.
+        any time because of flags specified in ChanServ's ACCESS LIST. The
+        latter only works if the bot is identified, because ChanServ (at least
+        on FreeNode) entrusts that info only to identified users.
         """
+        self._enqueue('authenticated', 'half-op', plugin, cmd, server, channel,
+                nick, message)
+        ns(self.bot.client, 'ACC', nick.split('!')[0])
 
     def authorize_voice(self, server, channel, nick, message, plugin, cmd):
         """
         Nick must have voice in the channel, or must be able to gain voice any
-        time because of flags specified in ChanServ's ACCESS LIST.
+        time because of flags specified in ChanServ's ACCESS LIST. The latter
+        only works if the bot is identified, because ChanServ (at least on
+        FreeNode) entrusts that info only to identified users.
         """
+        self._enqueue('authenticated', 'voice', plugin, cmd, server, channel,
+                nick, message)
+        ns(self.bot.client, 'ACC', nick.split('!')[0])
     
     def authorize_authenticated(self, server, channel, nick, message, plugin,
             cmd):
@@ -94,8 +119,10 @@ class Authnickserv(AuthorizationProvider):
         ns(self.bot.client, 'ACC', nick.split('!')[0])
 
     @command
-    @require_authenticated
+    @require_voice
     def auth(self, server, channel, nick, params):
+        cs(self.bot.client, 'FLAGS', '#p1tr-test', nick.split('!')[0])
+        self.bot.client.send('NAMES #debian')
         return 'Executed successfully.'
 
     def on_notice(self, server, channel, nick, message):
@@ -108,7 +135,17 @@ class Authnickserv(AuthorizationProvider):
                 for command in self._command_queues['authenticated'][user]:
                     self._respond_denial(command[3], command[4], command[5])
                 self._command_queues['authenticated'][user] = [] # queues clear
+                # Do the same for master commands, if any:
+                for command in self._command_queues['master'][user]:
+                    self._respond_denial(command[3], command[4], command[5])
+                self._command_queues['master'][user] = []
                 return
+            # Un-justified master commands have been purged. The rest can be
+            # executed now.
+            for command in self._command_queues['master'][user]:
+                self.execute(command[3], command[4], command[5],
+                        command[6].split(), command[1], command[2])
+            self._command_queues['master'][user] = []
             # By now, it is confirmed that the user is authenticated.
             # If there is a next queue defined, transfer the command. Otherwise,
             # execute it.
@@ -120,18 +157,53 @@ class Authnickserv(AuthorizationProvider):
                     # Depending on the type of queue, certain information
                     # needs to be requested from the services. Launch request
                     # upon enqueueing.
-                    self._enqueue(command[0], None, command[2], command[3],
-                            command[4], command[5], command[6])
-                    if command[0] == 'voice':
-                        pass #TODO
-                    elif command[0] == 'half-op':
-                        pass #TODO
-                    elif command[0] == 'op':
-                        pass #TODO
+                    self._enqueue(command[0], None, command[1], command[2],
+                            command[3], command[4], command[5], command[6])
+                    print(command)
+                    if command[0] in ('voice', 'half-op', 'op'):
+                        self.bot.client.send('NAMES', command[4])
                     elif command[0] == 'owner':
-                        pass #TODO
+                        cs(self.bot.client, 'FLAGS', channel, user)
             # Clear queue after executing/passing on commands.
             self._command_queues['authenticated'][user] = []
             return
         if nick.startswith('ChanServ!ChanServ@services'):
             pass
+
+    def on_names(self, server, channel, names):
+        for name in names:
+            if names[name] in ('+', '%', '@') and \
+                    name in self._command_queues['voice']: # Has at least voice
+                for command in self._command_queues['voice'][name]:
+                    self.execute(command[3], command[4], command[5],
+                            command[6].split(), command[1], command[2])
+                self._command_queues['voice'][name] = []
+            if names[name] in ('%', '@') and \
+                    name in self._command_queues['half-op']: # Has at least Half-OP
+                for command in self._command_queues['half-op'][name]:
+                    self.execute(command[3], command[4], command[5],
+                            command[6].split(), command[1], command[2])
+                self._command_queues['half-op'][name] = []
+            if names[name] == '@' and \
+                    name in self._command_queues['op']: # Has OP
+                for command in self._command_queues['op'][name]:
+                    self.execute(command[3], command[4], command[5],
+                            command[6].split(), command[1], command[2])
+                self._command_queues['op'][name] = []
+            # Move the remaining commands to the owner queue
+            if not name in self._command_queues['master']:
+                self._command_queues['master'][name] = []
+            if name in self._command_queues['voice']:
+                self._command_queues['master'][name] += \
+                        self._command_queues['voice'][name]
+                self._command_queues['voice'][name] = []
+            if name in self._command_queues['half-op']:
+                self._command_queues['master'][name] += \
+                        self._command_queues['half-op'][name]
+                self._command_queues['half-op'][name] = []
+            if name in self._command_queues['op']:
+                self._command_queues['master'][name] += \
+                        self._command_queues['op'][name]
+                self._command_queues['op'][name] = []
+            if len(self._command_queues['master'][name]) > 0:
+                ns(self.bot.client, 'ACC', name)
