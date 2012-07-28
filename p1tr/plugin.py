@@ -77,6 +77,9 @@ def require_op(func):
 def require_voice(func):
     return _add_annotation(func, 'require_voice', True)
 
+def require_authenticated(func):
+    return _add_annotation(func, 'require_authenticated', True)
+
     
 # Some utility functions
 def clean_string(string):
@@ -212,6 +215,14 @@ class AuthorizationProvider(Plugin):
     methods are passed the plugin and the command name. It's up to the
     implementation to execute the command. This permits deferred command
     processing.
+
+    The available ranks are:
+    Default < Authenticated < Voice < Half-OP < OP < Channel Owner < Master
+    Privileges of inferior ranks are included in superior ranks. All privileged
+    commands, which means all commands requiring ranks starting at
+    Authenticated, go through the authorization provider in use. Execution of
+    the command is delegated to the provider, to be performed upon successful
+    authorization.
     """
 
     def load_settings(self, config):
@@ -255,3 +266,11 @@ class AuthorizationProvider(Plugin):
         implemented by the actual authorization providers.
         """
         critical('Voice authorizer not implemented!')
+
+    def authorize_authenticated(self, server, channel, nick, message, plugin,
+            cmd):
+        """
+        Used for requiring the nick to be authenticated with the bot. To be
+        implemented by the actual authorization providers.
+        """
+        critical('Authenticated authorizer not implemented!')
