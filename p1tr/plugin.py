@@ -229,6 +229,9 @@ class AuthorizationProvider(Plugin):
     Authenticated, go through the authorization provider in use. Execution of
     the command is delegated to the provider, to be performed upon successful
     authorization.
+
+    Keep in mind that the rank inclusion of inferior ranks in superior ranks
+    must be implemented by the authorization provider.
     """
 
     master = None

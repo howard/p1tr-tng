@@ -89,9 +89,12 @@ class Authnickserv(AuthorizationProvider):
     def authorize_authenticated(self, server, channel, nick, message, plugin,
             cmd):
         """Nick must be authenticated with NickServ."""
+        self._enqueue('authenticated', None, plugin, cmd, server, channel, nick,
+                message)
+        ns(self.bot.client, 'ACC', nick.split('!')[0])
 
     @command
-    @require_master
+    @require_authenticated
     def auth(self, server, channel, nick, params):
         return 'Executed successfully.'
 
