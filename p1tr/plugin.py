@@ -80,6 +80,12 @@ def require_voice(func):
 def require_authenticated(func):
     return _add_annotation(func, 'require_authenticated', True)
 
+def has_annotation(plugin, command, annotation):
+    """Checks if an annotation is set for a given command in a given plugin."""
+    if not hasattr(plugin, command): return false
+    if not hasattr(getattr(plugin, command), '__annotations__'): return false
+    return annotation in getattr(plugin, command).__annotations__
+
     
 # Some utility functions
 def clean_string(string):
@@ -225,18 +231,21 @@ class AuthorizationProvider(Plugin):
     authorization.
     """
 
-    def load_settings(self, config):
-        try:
-            self.master = config.get('General', 'master')
-        except:
-            warning('No bot master specified in config file.')
-    
+    master = None
+
+    def execute(self, server, channel, nick, message, plugin, cmd):
+        """Executes a plugin command."""
+        ret_val = getattr(plugin, cmd)(server, channel, nick, message.split())
+        if isinstance(ret_val, str) or isinstance(ret_val, bytes):
+            self.bot.client.send('PRIVMSG', channel, ':' + ret_val)
+
     def authorize_master(self, server, channel, nick, message, plugin, cmd):
         """
         Bot master authorization. A simple implementation might be checking the
         nick. To be implemented by the actual authorization providers.
         """
         critical('Master authorizer not implemented!')
+        self.execute(server, channel, nick, message, plugin, cmd)
 
     def authorize_owner(self, server, channel, nick, message, plugin, cmd)  :
         """
@@ -244,6 +253,7 @@ class AuthorizationProvider(Plugin):
         authorization provider, which is to be implemented.
         """
         critical('Owner authorizer not implemented.')
+        self.execute(server, channel, nick, message, plugin, cmd)
 
     def authorize_op(self, server, channel, nick, message, plugin, cmd) :
         """
@@ -252,6 +262,7 @@ class AuthorizationProvider(Plugin):
         providers.
         """
         critical('OP authorizer not implemented!')
+        self.execute(server, channel, nick, message, plugin, cmd)
 
     def authorize_hop(self, server, channel, nick, message, plugin, cmd):
         """
@@ -259,6 +270,7 @@ class AuthorizationProvider(Plugin):
         actual authorization providers.
         """
         critical('Half-OP authorizer not implemented!')
+        self.execute(server, channel, nick, message, plugin, cmd)
 
     def authorize_voice(self, server, channel, nick, message, plugin, cmd):
         """
@@ -266,6 +278,7 @@ class AuthorizationProvider(Plugin):
         implemented by the actual authorization providers.
         """
         critical('Voice authorizer not implemented!')
+        self.execute(server, channel, nick, message, plugin, cmd)
 
     def authorize_authenticated(self, server, channel, nick, message, plugin,
             cmd):
@@ -274,3 +287,4 @@ class AuthorizationProvider(Plugin):
         implemented by the actual authorization providers.
         """
         critical('Authenticated authorizer not implemented!')
+        self.execute(server, channel, nick, message, plugin, cmd)

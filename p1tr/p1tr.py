@@ -15,6 +15,22 @@ sys.path.insert(0, os.getcwd())
 from p1tr.plugin import *
 from p1tr.logwrap import *
 
+
+def read_or_default(config, section, key, default,
+        manipulator=lambda val: val):
+    """
+    Tries to read a certain key from a certain config section. If either section
+    or key cannot be found, the provided default value is returned.
+    Optionally, a multiplicator can be provided to manipulate the config value
+    before returning. If this manipulator fails, the default value is returned.
+    """
+    try:
+        return manipulator(config.get(section, key))
+    except:
+        info('Key ' + key + ' not found in config section ' + section + '.')
+        return default
+
+
 def load_config(path=None):
     """
     Attempts to load config from the specified path, or if not specified,
@@ -35,6 +51,7 @@ def load_config(path=None):
 class BotError(Exception):
     """Raised on configuration- and non-plugin errors."""
 
+
 class BotHandler(DefaultCommandHandler):
 
     plugins = dict()
@@ -43,6 +60,12 @@ class BotHandler(DefaultCommandHandler):
     plugin providing this command as value.
     """
     commands = dict()
+
+    """
+    One plugin should serve as the authorization provider. The first
+    non-blacklisted plugin is used.
+    """
+    auth_provider = None
 
     def load_config(self, config):
         self.config = config
@@ -54,6 +77,8 @@ class BotHandler(DefaultCommandHandler):
         self.signal_character = self.config.get('General', 'signal_character') \
                 or '+'
         info('Signal character: ' + self.signal_character)
+        self.master = read_or_default(self.config, self.client.host, 'master',
+                '')
 
     def load_plugins(self, extra_path=None):
         """
@@ -112,6 +137,11 @@ class BotHandler(DefaultCommandHandler):
                             this_plugin.__annotations__['meta_plugin']:
                         debug(plugin_dir_name + ' is a meta plugin.')
                         this_plugin.bot = self
+                    # Register as authorization provider, if possible:
+                    if not self.auth_provider and \
+                            isinstance(this_plugin, AuthorizationProvider):
+                        self.auth_provider = this_plugin
+                        info('Authorization provider: ' + plugin_dir_name)
                     # Scan for command methods:
                     for member in inspect.getmembers(this_plugin):
                         try:
@@ -169,15 +199,47 @@ class BotHandler(DefaultCommandHandler):
             else:
                 return
             # Attempt to issue command, silently fail if this is not one.
-            ret_val = getattr(self.commands[cmd], cmd)(self.client.host + ':' +
-                    str(self.client.port), chan.decode('utf-8'),
-                    nick.decode('utf-8'), args)
+            if cmd not in self.commands: return # Not a command
+            # If command requires authorization, delegate execution to the
+            # authorization provider, if available.
+            server_str = self.client.host + ':' + str(self.client.port)
+            if self.auth_provider:
+                if has_annotation(self.commands[cmd], cmd, 'require_master'):
+                    self.auth_provider.authorize_master(server_str,
+                            chan.decode('utf-8'), nick.decode('utf-8'),
+                            msg, self.commands[cmd], cmd)
+                elif has_annotation(self.commands[cmd], cmd, 'require_owner'):
+                    self.auth_provider.authorize_owner(server_str,
+                            chan.decode('utf-8'), nick.decode('utf-8'),
+                            msg, self.commands[cmd], cmd)
+                elif has_annotation(self.commands[cmd], cmd, 'require_op'):
+                    self.auth_provider.authorize_op(server_str,
+                            chan.decode('utf-8'), nick.decode('utf-8'),
+                            msg, self.commands[cmd], cmd)
+                elif has_annotation(self.commands[cmd], cmd, 'require_hop'):
+                    self.auth_provider.authorize_hop(server_str,
+                            chan.decode('utf-8'), nick.decode('utf-8'),
+                            msg, self.commands[cmd], cmd)
+                elif has_annotation(self.commands[cmd], cmd, 'require_voice'):
+                    self.auth_provider.authorize_voice(server_str,
+                            chan.decode('utf-8'), nick.decode('utf-8'),
+                            msg, self.commands[cmd], cmd)
+                elif has_annotation(self.commands[cmd], cmd,
+                        'require_authenticated'):
+                    self.auth_provider.authorize_authenticated(server_str,
+                            chan.decode('utf-8'), nick.decode('utf-8'),
+                            msg, self.commands[cmd], cmd)
+                return
+            # No auth provider available, or not a privileged command. Executee
+            # as usual:
+            ret_val = getattr(self.commands[cmd], cmd)(server_str,
+                    chan.decode('utf-8'), nick.decode('utf-8'), args)
             # If text was returned, send it as a response.
             if isinstance(ret_val, str) or isinstance(ret_val, bytes):
                 self.client.send('PRIVMSG', respond_to, ':' + ret_val)
-                self.commands[cmd].on_privmsg(self.client.host + ':' +
-                        str(self.client.port), respond_to, self.client.nick,
-                        ret_val)
+                self._for_each_plugin(lambda plugin:
+                        plugin.on_privmsg(server_str, respond_to,
+                            self.client.nick, ret_val))
         except (ValueError, KeyError): pass
 
     def join(self, nick, chan):
@@ -231,21 +293,6 @@ def on_connect(client):
         if section.startswith(client.host) and '|' in section:
             client.send('JOIN', '#' + section.split('|')[1])
     # TODO: Auto-op if configured.
-
-
-def read_or_default(config, section, key, default,
-        manipulator=lambda val: val):
-    """
-    Tries to read a certain key from a certain config section. If either section
-    or key cannot be found, the provided default value is returned.
-    Optionally, a multiplicator can be provided to manipulate the config value
-    before returning. If this manipulator fails, the default value is returned.
-    """
-    try:
-        return manipulator(config.get(section, key))
-    except:
-        info('Key ' + key + ' not found in config section ' + section + '.')
-        return default
 
 
 def main():
