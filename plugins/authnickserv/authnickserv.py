@@ -118,13 +118,6 @@ class Authnickserv(AuthorizationProvider):
                 message)
         ns(self.bot.client, 'ACC', nick.split('!')[0])
 
-    @command
-    @require_voice
-    def auth(self, server, channel, nick, params):
-        cs(self.bot.client, 'FLAGS', '#p1tr-test', nick.split('!')[0])
-        self.bot.client.send('NAMES #debian')
-        return 'Executed successfully.'
-
     def on_notice(self, server, channel, nick, message):
         if nick.startswith('NickServ!NickServ@services'):
             parts = message.split()
