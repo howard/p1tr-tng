@@ -13,7 +13,7 @@ class Irc(Plugin):
         self.bot.client.send('NICK', params[0])
 
     @command
-    @require_op
+    @require_master
     def join(self, server, channel, nick, params):
         """
         Usage: join #CHANNEL [PASSWORD] - the bot will enter the specified

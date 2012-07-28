@@ -38,9 +38,9 @@ class Logger(Plugin):
         if channel in self._restricted_channels: return
         plain(' ** The bot left the channel.', server=server, channel=channel)
 
-    def on_modechanged(self, server, channel):
+    def on_modechanged(self, server, channel, nick, message):
         if channel in self._restricted_channels: return
-        pass #TODO
+        info(' * MODE information: ' + message, server=server)
 
     def on_topicchanged(self, server, channel, nick, oldtopic, newtopic):
         if channel in self._restricted_channels: return

@@ -172,7 +172,7 @@ class Plugin:
     def on_part(self, server, channel):
         """Triggered when a channel is left."""
  
-    def on_modechanged(self, server, channel):
+    def on_modechanged(self, server, channel, nick, message):
         """Triggered when a channel mode changes."""
 
     def on_topicchanged(self, server, channel, nick, oldtopic, newtopic):
@@ -198,6 +198,9 @@ class Plugin:
         Triggered whenever a user performs an action. Most clients use /me to
         allow users to do this.
         """
+
+    def on_names(self, server, channel, namelist):
+        """Triggered when channel member list is received."""
 
     def on_connect(self, server):
         """Triggered when the bot has connected to a server."""
@@ -238,7 +241,7 @@ class AuthorizationProvider(Plugin):
 
     def execute(self, server, channel, nick, message, plugin, cmd):
         """Executes a plugin command."""
-        ret_val = getattr(plugin, cmd)(server, channel, nick, message)
+        ret_val = getattr(plugin, cmd)(server, channel, nick, message[1:])
         if isinstance(ret_val, str) or isinstance(ret_val, bytes):
             self.bot.client.send('PRIVMSG', channel, ':' + ret_val)
 

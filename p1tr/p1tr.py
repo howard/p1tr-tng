@@ -67,6 +67,9 @@ class BotHandler(DefaultCommandHandler):
     """
     auth_provider = None
 
+    """Temporary storage for loading nicklists for channels."""
+    nicks = {}
+
     def load_config(self, config):
         self.config = config
         self.home = self.config.get('General', 'home') or ''
@@ -277,6 +280,12 @@ class BotHandler(DefaultCommandHandler):
                     str(self.client.port), chan.decode('utf-8'),
                     nick.decode('utf-8'), msg.decode('utf-8')))
 
+    def mode(self, nick, chan, msg):
+        """Called on MODE responses."""
+        self._for_each_plugin(lambda plugin:
+                plugin.on_modechanged(self.client.host + ':' +
+                    str(self.client.port), chan.decode('utf-8'),
+                    nick.decode('utf-8'), msg.decode('utf-8')))
 
     def quit(self, message):
         """Called on disconnect."""
@@ -288,6 +297,30 @@ class BotHandler(DefaultCommandHandler):
         """Called on bot termination."""
         self._for_each_plugin(lambda plugin:
                 plugin.on_quit())
+        
+    def __unhandled__(self, cmd, *args):
+        """Unhandled commands go to this handler."""
+        cmd = cmd.decode('utf-8')
+        if cmd == '353': # Channel member list
+            channel = args[3].decode('utf-8')
+            # The member list may be spread across multiple messages
+            if not channel in self.nicks:
+                self.nicks[channel] = {}
+            for nick in args[4].decode('utf-8').split():
+                if nick[0] in ('@', '%', '+'):
+                    self.nicks[channel][nick[1:]] = nick[0]
+                else:
+                    self.nicks[channel][nick] = ''
+        elif cmd == '366': # Channel member list fetching done.
+            channel = args[2].decode('utf-8')
+            self._for_each_plugin(lambda plugin:
+                    plugin.on_names(self.client.host + ':' +
+                        str(self.client.port), channel,
+                        self.nicks[channel]))
+            self.nicks[channel] = {}
+        else:
+            debug('Unknown command: [' + cmd + '] ' + str(args),
+                    server=self.client.host)  
 
 
 def on_connect(client):
