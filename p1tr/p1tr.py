@@ -230,6 +230,11 @@ class BotHandler(DefaultCommandHandler):
                             chan.decode('utf-8'), nick.decode('utf-8'),
                             msg, self.commands[cmd], cmd)
                 return
+            elif has_annotation(self.commands[cmd], cmd, 'require_master'):
+                # Even if no auth provider is available, restrict master
+                # commands to users with a fitting nick. This is the least
+                # we can do for security.
+                if nick.decode('utf-8').split('!')[0] != self.master: return
             # No auth provider available, or not a privileged command. Executee
             # as usual:
             ret_val = getattr(self.commands[cmd], cmd)(server_str,
