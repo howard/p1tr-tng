@@ -145,6 +145,9 @@ class BotHandler(DefaultCommandHandler):
                             isinstance(this_plugin, AuthorizationProvider):
                         self.auth_provider = this_plugin
                         info('Authorization provider: ' + plugin_dir_name)
+                    # Set data storage path:
+                    this_plugin.data_path = os.path.join(self.home, 'data',
+                            plugin_dir_name)
                     # Scan for command methods:
                     for member in inspect.getmembers(this_plugin):
                         try:
