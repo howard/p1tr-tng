@@ -12,6 +12,11 @@ def boolify(string):
     """
     return string.lower() in BOOLIFY_TRUE
 
+
+class BotError(Exception):
+    """Raised on configuration- and non-plugin errors."""
+
+
 def humanize_time(delta):
     """
     Converts a timespan provided as a datetime object into a human-readable

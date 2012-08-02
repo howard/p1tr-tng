@@ -2,7 +2,7 @@
 
 import configparser
 import os.path
-from p1tr.helpers import boolify, pretty_list
+from p1tr.helpers import boolify, BotError, pretty_list
 
 def prompt(description, default, vals=[]):
     """
@@ -88,9 +88,9 @@ def config_wizard():
     config = configparser.ConfigParser()
     print('General configuration')
     print('=====================')
-    home = prompt('P1tr\'s home directory. The contents of $home/plugins are \
+    home = prompt("P1tr's home directory. The contents of $home/plugins are \
 loaded and treated as plugins. $home/log is the storage location for log \
-files. $home/data contains the plugins\' persistent storage files.', '.')
+files. $home/data contains the plugins' persistent storage files.", '.')
     loglevel = prompt('Loglevel - the lowest non-ignored log message severity:',
             'INFO', ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
     background = boolify(prompt('Run bot in background?', 'no'))

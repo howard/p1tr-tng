@@ -13,12 +13,9 @@ import sys
 sys.path.insert(0, os.getcwd())
 
 from p1tr.config import config_wizard, read_or_default, load_config
+from p1tr.helpers import BotError
 from p1tr.plugin import *
 from p1tr.logwrap import *
-
-
-class BotError(Exception):
-    """Raised on configuration- and non-plugin errors."""
 
 
 class BotHandler(DefaultCommandHandler):
@@ -340,7 +337,13 @@ def main():
     if args.mkconf:
         config_path = config_wizard()
 
-    config = load_config(config_path)
+    config_loaded = False
+    while not config_loaded:
+        try:
+            config = load_config(config_path)
+        except BotError:
+            error('No configuration file at the given path. Starting wizard...')
+            config_path = config_wizard()
     
     loglevel = logging.ERROR
     set_loglevel(read_or_default(config, 'General', 'loglevel', logging.ERROR,
