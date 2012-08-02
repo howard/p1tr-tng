@@ -12,6 +12,7 @@ from string import ascii_lowercase
 import sys
 sys.path.insert(0, os.getcwd())
 
+from p1tr.config import config_wizard
 from p1tr.plugin import *
 from p1tr.logwrap import *
 
@@ -359,12 +360,19 @@ def main():
     argparser = argparse.ArgumentParser(description='P1tr TNG - IRC bot.')
     argparser.add_argument('-c', '--conf', help='path to configuration file',
             action='store', default='config.cfg')
+    argparser.add_argument('-m', '--mkconf', help='launches the configuration wizard',
+            action='store_const', const=True, default=False)
     args = argparser.parse_args()
 
     clients = dict()
     connections = dict()
+    config_path = args.conf
 
-    config = load_config(args.conf)
+    # Launch configuration wizard, if desired, before bot launch
+    if args.mkconf:
+        config_path = config_wizard()
+
+    config = load_config(config_path)
     
     loglevel = logging.ERROR
     set_loglevel(read_or_default(config, 'General', 'loglevel', logging.ERROR,

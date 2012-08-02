@@ -6,5 +6,5 @@ dist
 P1tr.egg-info
 __pycache__
 *.swp
-*config.cfg
 *.db
+*.cfg

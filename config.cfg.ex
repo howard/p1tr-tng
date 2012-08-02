@@ -29,9 +29,6 @@ signal_character = +
 ;nick_password =
 # The user with this nickname may give the bot admin commands.
 ;master = NickOfBotMaster
-# If yes, NickOfBotMaster must be authenticated with NickServ. If NickServ is
-# not available, use no.
-;require_auth = yes
 # Network connection data:
 ;host = irc.freenode.net
 ;port = 6667
@@ -55,14 +52,6 @@ signal_character = +
 # By default, all conversations are logged. You may notice that this property is
 # prefixed by "logger.". This notation is used for plugin-specific settings.
 ;logger.log = yes
-# Some features may require that the bot has operator privileges. If the
-# following property is set to yes, the bot automatically acquires operator
-# status upon joining the channel. Please note, however, that the IRC server
-# must provide a ChanServ service, the bot must be authenticated, and the bot's
-# nick must be allowed to become OP in this channel. If those requirements are
-# not met, auto-op is impossible.
-# By default, auto-op is deacticated.
-;auto_op = no
 # Plugin blacklisting is possible on a channel level. Note that this blacklist
 # can only extend higher blacklists (server and global).
 ;plugin_blacklist =

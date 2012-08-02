@@ -1,5 +1,17 @@
 """Generally useful helper functions, possibly for use in plugins."""
 
+"""Values causing True to be returned when calling boolify."""
+BOOLIFY_TRUE = ('true', 'yes', 'y', '1', 'on')
+
+def boolify(string):
+    """
+    Returns true or false, depending on the content of the supplied string.
+    Case doesn't matter.
+    (TRUE, True, true, YES, yes, Yes, y, Y, 1, ON, On, on) -> True
+    Everything else -> False
+    """
+    return string.lower() in BOOLIFY_TRUE
+
 def humanize_time(delta):
     """
     Converts a timespan provided as a datetime object into a human-readable
@@ -23,3 +35,16 @@ def humanize_time(delta):
             add_unit(hours, 'hour', 'hours'),
             add_unit(minutes, 'minute', 'minutes'),
             add_unit(seconds, 'second', 'seconds'))).strip()
+
+def pretty_list(lst, joiner=', ', stringifier=str):
+    """
+    Turns a list into a string with all elements joined together. By default,
+    the elements are joined with ', ' - this can be changed optionally.
+    The list can contain any type of object, since str() is called. For some
+    types, you may want to consider implementing the __str__() method.
+    Alternatively, you can provide the optional stringifier parameter, which
+    requires a function with one parameter, returning a string as value.
+    A nice alternative use for the stringifier is a function that modifies a
+    list value (for example converts the case).
+    """
+    return joiner.join([stringifier(elem) for elem in lst])
