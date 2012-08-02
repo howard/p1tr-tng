@@ -138,3 +138,37 @@ plugins, separated by spaces, or empty:', '')
         except IOError:
             print('Unable to write file. Choose a different path.')
     return path
+
+
+def read_or_default(config, section, key, default,
+        manipulator=lambda val: val):
+    """
+    Tries to read a certain key from a certain config section. If either section
+    or key cannot be found, the provided default value is returned.
+    Optionally, a multiplicator can be provided to manipulate the config value
+    before returning. If this manipulator fails, the default value is returned.
+    """
+    try:
+        return manipulator(config.get(section, key))
+    except:
+        info('Key ' + key + ' not found in config section ' + section + '.')
+        return default
+
+
+def load_config(path=None):
+    """
+    Attempts to load config from the specified path, or if not specified,
+    from the file in the working directory called "config.cfg".
+
+    Raises BotError if there is no config found.
+    """
+    config = configparser.ConfigParser()
+    if path:
+        if config.read(path) == []:
+            raise BotError("No config at the specified path.")
+    else:
+        if config.read('config.cfg') == []:
+            raise BotError("No config in the working directory.")
+    return config
+
+
