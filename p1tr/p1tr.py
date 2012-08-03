@@ -341,6 +341,7 @@ def main():
     while not config_loaded:
         try:
             config = load_config(config_path)
+            config_loaded = True
         except BotError:
             error('No configuration file at the given path. Starting wizard...')
             config_path = config_wizard()
