@@ -1,5 +1,6 @@
 import inspect
 from p1tr.plugin import *
+from p1tr.helpers import pretty_list
 
 @meta_plugin
 class Help(Plugin):
@@ -26,14 +27,14 @@ class Help(Plugin):
                         if hasattr(member, '__annotations__') \
                                 and 'command' in member.__annotations__))
                 if len(commands) > 0:
-                    help_msg += ' Commands: ' + ' '.join(commands)
+                    help_msg += ' Commands: %s' % pretty_list(commands)
                 return clean_string(help_msg)
             elif params[0] in self.bot.commands: # Command found
                 return clean_string(getattr(
                     self.bot.commands[params[0]], params[0]).__doc__ or \
                             'Sorry, no help message available.')
             else:
-                return 'Plugin or command "' + params[0] + '" not found.'
+                return 'Plugin or command "%s" not found.' % params[0]
         # Only Plugin->Command left now. Try to find it...
         if params[1] in self.bot.commands and \
                 self.bot.commands[params[1]].__class__.__name__.lower() \
@@ -42,13 +43,13 @@ class Help(Plugin):
                 self.bot.plugins[params[0]], params[1]).__doc__ or \
                         'Sorry, no help message available.')
         # If everything fails:
-        return 'Command "' + params[1] + '" from plugin "' + params[0] + \
-                '" not found."'
-    
+        return 'Command "%s" from plugin "%s" not found.' % (params[1],
+                params[0])
+
     @command
     def list_commands(self, server, channel, nick, params):
         """Lists all available commands."""
-        return ' '.join(self.bot.commands.keys())
+        return pretty_list(self.bot.commands.keys())
 
     @command
     def list_plugins(self, server, channel, nick, params):
@@ -56,4 +57,4 @@ class Help(Plugin):
         Lists all active plugins. Plugins on the global- or server-wide
         blacklist are not shown.
         """
-        return ' '.join(self.bot.plugins.keys())
+        return pretty_list(self.bot.plugins.keys())

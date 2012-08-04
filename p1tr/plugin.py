@@ -19,7 +19,7 @@ def load_by_name(plugin_name, config):
     2. If the directory was found, read the .py file with the same name and
        instantiate the class with the capitalized version of plugin_name, which
        should be defined in the file.
-    3. The resulting object is checked, whether its class is derived from 
+    3. The resulting object is checked, whether its class is derived from
        Plugin.
     4. Apply plugin settings as specified in the configuration file to the
        plugin.
@@ -33,9 +33,10 @@ def load_by_name(plugin_name, config):
         module = __import__('plugins.' + plugin_name + '.' + plugin_name)
     except ImportError:
         raise PluginError('Plugin "' + plugin_name + '" not found.')
-    
+
     # Create instance and check type.
-    instance = getattr(getattr(getattr(module, plugin_name), plugin_name), plugin_name.capitalize())()
+    instance = getattr(getattr(getattr(module, plugin_name), plugin_name),
+            plugin_name.capitalize())()
     if not isinstance(instance, Plugin):
         raise PluginError('Invalid plugin: Not derived from Plugin.')
 
@@ -87,7 +88,7 @@ def has_annotation(plugin, command, annotation):
     if not hasattr(getattr(plugin, command), '__annotations__'): return false
     return annotation in getattr(plugin, command).__annotations__
 
-    
+
 # Some utility functions
 def clean_string(string):
     """
@@ -118,7 +119,7 @@ class Plugin:
     Please note that the docstring of your plugin's class, which inherits from
     Plugin, is used to describe the plugin in the help message.
     """
-    
+
     """Registry of all open storages."""
     _storages = {}
 
@@ -158,14 +159,14 @@ class Plugin:
             for key in section:
                 if __name__.lower() + '.' in key:
                     settings[__name__.__len__() + 1:] = section[key]
-    
+
     def load_storage(self, identifier):
         """
         Persistent storage mechanism for P1tr plugins. Calling this method
         returns a dictionary-like key-value-storage, backed by Python's shelve
         module. Pretty much anything can be serialized using this mechanism. For
         details, refer to the documentation of the shelve module.
-        
+
         The pickle protocol version 3 is used, which was introduced with Python 3
         and is not backward compatible.
 
@@ -210,7 +211,7 @@ class Plugin:
                      plugin=self.__class__.__name__.lower())
         else:
             raise ValueError('Specify identifier or storage for saving.')
-    
+
     def close_storage(self, identifier=None, storage=None):
         """
         Closes a storage. Identify the storage you want to close either by
@@ -269,7 +270,7 @@ class Plugin:
 
     def on_part(self, server, channel):
         """Triggered when a channel is left."""
- 
+
     def on_modechanged(self, server, channel, nick, message):
         """Triggered when a channel mode changes."""
 
@@ -278,7 +279,7 @@ class Plugin:
 
     def on_kicked(self, server, channel, reason):
         """Triggered when the bot is kicked from a channel."""
-    
+
     def on_userjoin(self, server, channel, nick):
         """Triggered when a user joins a channel the bot is in."""
 
@@ -370,7 +371,7 @@ class AuthorizationProvider(Plugin):
 
     def authorize_hop(self, server, channel, nick, message, plugin, cmd):
         """
-        Half-OP. Ranked above voice. To be implemented by the 
+        Half-OP. Ranked above voice. To be implemented by the
         actual authorization providers.
         """
         critical('Half-OP authorizer not implemented!')
