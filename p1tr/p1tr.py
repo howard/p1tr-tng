@@ -58,7 +58,7 @@ class BotHandler(DefaultCommandHandler):
         if not self.config:
             raise BotError("Cannot load plugins if the configuration has not \
                     been loaded yet.")
-        
+
         paths = ['plugins', os.path.join(self.home, 'plugins')]
         if (extra_path):
             paths.insert(0, extra_path)
@@ -85,7 +85,7 @@ class BotHandler(DefaultCommandHandler):
                 if not plugin_dir_name.lower()[0] in ascii_lowercase:
                     debug(plugin_dir + ' is not a plugin directory.')
                     continue
-                if not os.path.isdir(plugin_dir): 
+                if not os.path.isdir(plugin_dir):
                     debug(plugin_dir + ' is not a plugin directory.')
                     continue
                 if plugin_dir_name in self.global_plugin_blacklist:
@@ -126,7 +126,7 @@ class BotHandler(DefaultCommandHandler):
                     self.plugins[plugin_dir_name] = this_plugin
                     info('Plugin ' + plugin_dir_name + ' was loaded.')
                 except PluginError as pe:
-                    error('Plugin ' + plugin_dir_name + 
+                    error('Plugin ' + plugin_dir_name +
                             ' could not be loaded: ' + str(pe))
 
     def _for_each_plugin(self, func):
@@ -143,10 +143,13 @@ class BotHandler(DefaultCommandHandler):
             self.action(nick, chan, msg)
             return
         # Regular PRIVMSG from here onwarts
-        self._for_each_plugin(lambda plugin:
-                plugin.on_privmsg(self.client.host + ':' + str(self.client.port),
-                    chan.decode('utf-8'), nick.decode('utf-8'),
-                    msg.decode('utf-8')))
+        def _plugin_handler(plugin):
+            ret_val = plugin.on_privmsg('%s:%d' % (self.client.host,
+                self.client.port), chan.decode('utf-8'), nick.decode('utf-8'),
+                msg.decode('utf-8'))
+            if isinstance(ret_val, str) and len(ret_val) > 0:
+                self.client.send('PRIVMSG', chan, ':' + ret_val)
+        self._for_each_plugin(_plugin_handler)
         # Check for commands
         try:
             cmd = ''
@@ -239,7 +242,7 @@ class BotHandler(DefaultCommandHandler):
             self._for_each_plugin(lambda plugin:
                     plugin.on_userjoin(self.client.host + ':' + str(self.client.port),
                         chan.decode('utf-8'), nick))
- 
+
     def connected(self):
         self._for_each_plugin(lambda plugin:
                 plugin.on_connect(self.client.host + ':' + str(self.client.port)))
@@ -285,7 +288,7 @@ class BotHandler(DefaultCommandHandler):
                 plugin.on_quit())
         self._for_each_plugin(lambda plugin:
                 plugin.close_all_storages())
-        
+
     def __unhandled__(self, cmd, *args):
         """Unhandled commands go to this handler."""
         cmd = cmd.decode('utf-8')
@@ -308,7 +311,7 @@ class BotHandler(DefaultCommandHandler):
             self.nicks[channel] = {}
         else:
             debug('Unknown command: [' + cmd + '] ' + str(args),
-                    server=self.client.host)  
+                    server=self.client.host)
 
 
 def on_connect(client):
@@ -345,7 +348,7 @@ def main():
         except BotError:
             error('No configuration file at the given path. Starting wizard...')
             config_path = config_wizard()
-    
+
     loglevel = logging.ERROR
     set_loglevel(read_or_default(config, 'General', 'loglevel', logging.ERROR,
         lambda val: getattr(logging, val)))
@@ -371,7 +374,7 @@ def main():
     try:
         while running:
             for client in clients:
-                next(connections[client]) 
+                next(connections[client])
     except KeyboardInterrupt:
         running = False
     for client in clients:
