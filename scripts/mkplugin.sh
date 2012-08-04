@@ -1,14 +1,16 @@
 #!/bin/bash
 
+# Check if plugin name is specified. If not, print usage and exit.
 if [ $# -lt 1 ]; then
-    echo "Usage: $0 PLUGIN_NAME [BOT_HOME]"
+    echo "Usage: $0 PLUGIN_NAME [BOT_HOME] - creates a scaffold plugin with the specified name. If BOT_HOME is not supplied, the current working directory will be assumed. BOT_HOME must contain a plugins directory."
     exit 1
 fi
 
+# Since the bot home is optional, check if the parameter is set, and use the default if not.
 if [ $# -lt 2 ]; then
-    BOT_HOME=$2
-else
     BOT_HOME=.
+else
+    BOT_HOME=$2
 fi
 
 PLUGIN_NAME=$1
@@ -19,9 +21,11 @@ if [ -e $PLUGIN_DIR ]; then
     exit 2
 fi
 
+# Create plugin module
 mkdir $PLUGIN_DIR
 touch $PLUGIN_DIR/__init__.py
 
+# Create dummy implementation
 PLUGIN_FILE=$PLUGIN_DIR/$PLUGIN_NAME.py
 CLASS_NAME="${PLUGIN_NAME[@]^}"
 cat << EOF | cat > $PLUGIN_FILE
@@ -40,3 +44,5 @@ class $CLASS_NAME(Plugin):
         return "This text is sent as a response to the command."
 
 EOF
+
+echo "Develop your plugin by editing the file $PLUGIN_FILE."
