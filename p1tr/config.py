@@ -15,7 +15,7 @@ def prompt(description, default, vals=[]):
         if not default in vals:
             vals.append(default)
         vals.sort()
-        prompt_str = '%s (%s) [%s] ' % (description, 
+        prompt_str = '%s (%s) [%s] ' % (description,
             pretty_list(vals), default)
     else:
         prompt_str = '%s [%s] ' % (description, default)
@@ -53,7 +53,7 @@ def _write_general(config, home, loglevel, background, plugin_blacklist,
             'signal_character': signal_char
     }
 
-def _write_server(config, host, port, nick, nick_password, master, 
+def _write_server(config, host, port, nick, nick_password, master,
         server_password, plugin_blacklist):
     """
     Modifies a ConfigParser object to contain a proper server section with the
@@ -75,8 +75,6 @@ def _write_channel(config, host, channel, enable_logging,
     Modifies a ConfigParser object to contain a proper channel section with the
     given values set.
     """
-    print(str(plugin_blacklist))
-    print(plugin_blacklist.__class__)
     config['%s|%s' % (host, channel[1:])] = {
             'logger.log': _bool_to_config(enable_logging),
             'plugin_blacklist': plugin_blacklist
@@ -126,7 +124,7 @@ plugins, separated by spaces, or empty:', '')
                 plugin_blacklist)
             one_more_channel = boolify(prompt('Add another channel?', 'no'))
         one_more_server = boolify(prompt('Add another server?', 'no'))
-    
+
     print()
     saved_successfully = False
     while not saved_successfully:
