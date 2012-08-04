@@ -79,6 +79,32 @@ class Wordtracker(Plugin):
             return '%s has mentioned "%s" %d times.' % (params[1], word,
                     mention_count)
 
+    @command
+    def trackstats(self, server, channel, nick, params):
+        """
+        Provides some factoids about the tracked words on a server-wide scope.
+        """
+        word_mentions = {}
+        # Get absolute number of mentions
+        for word in self.tracklist:
+            word_mentions[word] = 0
+            for channel in self.tracklist[word]:
+                for nick in self.tracklist[word][channel]:
+                    word_mentions[word] += self.tracklist[word][channel][nick]
+        words = list(self.tracklist.keys())
+        # Sort by mentions in ascending order
+        words = sorted(words, key=lambda item: word_mentions[item])
+        words.reverse()
+        print(str(words))
+        top_words = words[:3]
+        message = 'The most popular words are: '
+        message += pretty_list(
+                ['%s (%d)' % (word, word_mentions[word])
+                    for word in top_words])
+        message += '. The least popular word is %s (%d).' % (words[-1],
+                word_mentions[words[-1]])
+        return message
+
     def on_privmsg(self, server, channel, nick, message):
         # Increase stats whenever seeing the word:
         user = nick.split('!')[0]
