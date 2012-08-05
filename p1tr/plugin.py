@@ -4,7 +4,75 @@ Plugin base class and related utilities.
 import glob
 import os.path
 import shelve
+from string import ascii_lowercase
+from p1tr.config import read_or_default
+from p1tr.helpers import pretty_list
 from p1tr.logwrap import *
+
+def discover_plugins(config):
+    """
+    Finds the names of possible plugins, which can be found in the search
+    directories. Locations are searched in the following order:
+    Current working directory -> Bot home -> Bot install location
+    Note that for each of the locations above, the "plugins" sub-directory is
+    searched.
+    Also note that when running P1tr standalone (not easy_install3'd), the
+    bot install location is where you put the bot's Python files.
+    If a plugin with the same name is found in two different locations, the one
+    found first has precedence.
+    This function does not load the plugins, just deliver a list of names!
+    """
+    plugin_names = [] # Results
+    if not config: # Config is essential to find all possible plugin dirs
+        raise BotError("Cannot load plugins if the configuration has not \
+                been loaded yet.")
+    home = read_or_default(config, 'General', 'home', '.')
+    global_plugin_blacklist = read_or_default(config, 'General',
+            'plugin_blacklist', [], lambda val: val.split())
+
+    # Assemble search paths. If you need to add custom ones, just add them to
+    # the path list below. The rest of the function can remain unchanged.
+    paths = ['plugins', os.path.join(home, 'plugins')]
+    try:
+        # plugins folder is in p1tr.py's parent directory.
+        paths.append(os.path.join(
+            os.path.split(
+                os.path.dirname(os.path.realpath(__main__.__file__)))[0],
+            'plugins'))
+    except NameError: # __file__ is not defined in the python shell.
+        warning('Cannot determine install directory. Ignoring.')
+    paths = list(set(paths)) # Remove duplicates.
+    debug('Plugin directories: %s' % pretty_list(paths))
+
+    # Search vor possible plugins
+    for path in paths:
+        plugin_dirs = []
+        try: # Check if valid path.
+            plugin_dirs = os.listdir(path)
+        except OSError:
+            debug(path + ' is not a valid directory.')
+            continue
+        # Consider all directories plugins as long as they start with
+        # a character.
+        for plugin_dir_name in plugin_dirs:
+            plugin_dir = os.path.join(path, plugin_dir_name)
+            if not plugin_dir_name.lower()[0] in ascii_lowercase:
+                debug(plugin_dir + ' is not a plugin directory.')
+                continue
+            if not os.path.isdir(plugin_dir):
+                debug(plugin_dir + ' is not a plugin directory.')
+                continue
+            if plugin_dir_name in global_plugin_blacklist:
+                debug(plugin_dir_name + ' is blacklisted globally.')
+                continue
+            # Skip plugins if one with the same name has already been loaded
+            if plugin_dir_name in plugin_names:
+                debug(plugin_dir_name + ' has been found before. Skipping.')
+            # It passed all tests. It's most likely a plugin.
+            plugin_names.append(plugin_dir_name)
+    plugin_names.sort()
+    return plugin_names
+
 
 def load_by_name(plugin_name, config):
     """

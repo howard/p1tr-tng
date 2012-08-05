@@ -8,7 +8,6 @@ import inspect
 import logging
 import os
 import os.path
-from string import ascii_lowercase
 import sys
 sys.path.insert(0, os.getcwd())
 
@@ -50,85 +49,43 @@ class BotHandler(DefaultCommandHandler):
         self.master = read_or_default(self.config, self.client.host, 'master',
                 '')
 
-    def load_plugins(self, extra_path=None):
+    def load_plugins(self):
         """
         Loads all plugins that are not blacklisted globally.
         Search order: extra_path -> $workingDir/plugins -> $p1trHome/plugins ->
             $installDir/plugins
         """
-        if not self.config:
-            raise BotError("Cannot load plugins if the configuration has not \
-                    been loaded yet.")
+        for plugin_dir_name in discover_plugins(self.config):
+            try:
+                debug('Trying to load plugin ' + plugin_dir_name + '...')
+                this_plugin = load_by_name(plugin_dir_name, self.config)
+                # If this is a meta plugin, add the bot attribute:
+                if hasattr(this_plugin, '__annotations__') and \
+                        this_plugin.__annotations__['meta_plugin']:
+                    debug(plugin_dir_name + ' is a meta plugin.')
+                    this_plugin.bot = self
+                # Register as authorization provider, if possible:
+                if not self.auth_provider and \
+                        isinstance(this_plugin, AuthorizationProvider):
+                    self.auth_provider = this_plugin
+                    info('Authorization provider: ' + plugin_dir_name)
+                # Set data storage path:
+                this_plugin.data_path = os.path.join(self.home, 'data',
+                        plugin_dir_name)
+                # Scan for command methods:
+                for member in inspect.getmembers(this_plugin):
+                    try:
+                        if member[1].__annotations__['command'] == True:
+                            self.commands[member[0]] = this_plugin
+                            debug('Registered command ' + member[0] +
+                                    ' for plugin ' + plugin_dir_name)
+                    except (AttributeError, KeyError): pass # Not a command
 
-        paths = ['plugins', os.path.join(self.home, 'plugins')]
-        if (extra_path):
-            paths.insert(0, extra_path)
-        try:
-            # plugins folder is in p1tr.py's parent directory.
-            paths.append(os.path.join(
-                os.path.split(
-                    os.path.dirname(os.path.realpath(__file__)))[0], 'plugins'))
-        except NameError: pass # __file__ is not defined in the python shell.
-        paths = list(set(paths)) # Remove duplicates.
-        debug('Plugin directories: ' + str(paths))
-
-        for path in paths:
-            plugin_dirs = []
-            try: # Check if valid path.
-                plugin_dirs = os.listdir(path)
-            except OSError:
-                debug(path + ' is not a valid directory.')
-                continue
-            # Consider all directories plugins as long as they start with
-            # a character.
-            for plugin_dir_name in plugin_dirs:
-                plugin_dir = os.path.join(path, plugin_dir_name)
-                if not plugin_dir_name.lower()[0] in ascii_lowercase:
-                    debug(plugin_dir + ' is not a plugin directory.')
-                    continue
-                if not os.path.isdir(plugin_dir):
-                    debug(plugin_dir + ' is not a plugin directory.')
-                    continue
-                if plugin_dir_name in self.global_plugin_blacklist:
-                    debug(plugin_dir_name + ' is blacklisted globally.')
-                    continue
-                # Skip plugins if one with the same name has already been loaded
-                if plugin_dir_name in self.plugins.keys():
-                    debug(plugin_dir_name + ' has been loaded before. Skipping.')
-                    continue
-                # Files and globally blacklisted plugins are skipped now.
-                # Loading plugins, if a plugin with the same name has not been
-                # loaded yet.
-                try:
-                    debug('Trying to load plugin ' + plugin_dir_name + '...')
-                    this_plugin = load_by_name(plugin_dir_name, self.config)
-                    # If this is a meta plugin, add the bot attribute:
-                    if hasattr(this_plugin, '__annotations__') and \
-                            this_plugin.__annotations__['meta_plugin']:
-                        debug(plugin_dir_name + ' is a meta plugin.')
-                        this_plugin.bot = self
-                    # Register as authorization provider, if possible:
-                    if not self.auth_provider and \
-                            isinstance(this_plugin, AuthorizationProvider):
-                        self.auth_provider = this_plugin
-                        info('Authorization provider: ' + plugin_dir_name)
-                    # Set data storage path:
-                    this_plugin.data_path = os.path.join(self.home, 'data',
-                            plugin_dir_name)
-                    # Scan for command methods:
-                    for member in inspect.getmembers(this_plugin):
-                        try:
-                            if member[1].__annotations__['command'] == True:
-                                self.commands[member[0]] = this_plugin
-                                debug('Registered command ' + member[0] +
-                                        ' for plugin ' + plugin_dir_name)
-                        except (AttributeError, KeyError): pass # Not a command
-
-                    self.plugins[plugin_dir_name] = this_plugin
-                    info('Plugin ' + plugin_dir_name + ' was loaded.')
-                except PluginError as pe:
-                    error('Plugin ' + plugin_dir_name +
-                            ' could not be loaded: ' + str(pe))
+                self.plugins[plugin_dir_name] = this_plugin
+                info('Plugin ' + plugin_dir_name + ' was loaded.')
+            except PluginError as pe:
+                error('Plugin ' + plugin_dir_name +
+                        ' could not be loaded: ' + str(pe))
 
     def _for_each_plugin(self, func):
         """
