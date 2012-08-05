@@ -46,11 +46,12 @@ class $CLASS_NAME(Plugin):
 EOF
 
 # Create dummy test case
-cat << EOF | cat > $PLUGIN_DIR/$PLUGIN_NAME_test.py
+CLASS_NAME="$CLASS_NAME"Test
+cat << EOF | cat > "$PLUGIN_DIR/$PLUGIN_NAME"_test.py
 from p1tr.plugin import *
 from p1tr.test import *
 
-class $CLASS_NAMETest(PluginTestCase):
+class $CLASS_NAME(PluginTestCase):
     """This is a dummy test case for the generated plugin scaffold."""
 
     def setUp(self):
@@ -77,4 +78,4 @@ class $CLASS_NAMETest(PluginTestCase):
             self.assertEqual(expected, ret_val)
 EOF
 
-echo "Develop your plugin by editing the file $PLUGIN_FILE."
+echo "Develop your plugin by editing the file $PLUGIN_DIR/$PLUGIN_NAME.py"
