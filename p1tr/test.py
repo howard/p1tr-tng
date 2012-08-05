@@ -1,7 +1,11 @@
 """Classes and functions enabling automated unit testing of plugins."""
 
+import inspect
 from collections import namedtuple
+import functools
 import unittest
+from p1tr.logwrap import info, warning
+from p1tr.plugin import _add_annotation, discover_plugins, load_by_name
 
 """Container for dummy test data sets."""
 DummyData = namedtuple('DummyData',
@@ -45,29 +49,85 @@ trolCharacter__________________________________________________________________\
 ____', nick='longnickn', params=['text'], message="  \ttext ")
             ]
 
-
-    def __init__(self, plugin_instance):
-        """Injects a plugin instance to be used in test methods."""
-        unittest.TestCase.__init__(self)
-        self.plugin = plugin_instance
+    """
+    The instance of the plugin-to-test is injected after instantiation of the
+    class by the test runner.
+    """
+    plugin = None
 
     def setUp(self):
         """"""
+
     def tearDown(self):
         """"""
 
+def test(func):
+    """Denotes test method."""
+    return _add_annotation(func, 'test', True)
 
-def get_testcases(module):
-    """
-    Finds all test cases in the supplied module and returns instances of those
-    as a list. Note that only test cases derived from PluginTestCase will be
-    used.
-    """
-    #TODO
+def get_suite(plugin, config, module):
+    """Creates a test suite of all test cases found in module."""
+    test_classes = [member[1]
+        for member in inspect.getmembers(module)
+        if isinstance(member[1], type) and \
+                issubclass(member[1], PluginTestCase)]
+    # Discover test methods and create TestCase objects based on them
+    test_cases = []
+    for test_class in test_classes:
+        for member in inspect.getmembers(test_class):
+            if hasattr(member[1], '__annotations__') and \
+                    'test' in member[1].__annotations__:
+                test_cases.append(test_class(member[0]))
+                test_cases[-1].plugin = load_by_name(plugin, config)
+    return unittest.TestSuite(test_cases)
 
-def run_tests(config):
+def _reduce_test_results(results):
+    """Summarizes test results to a tuple with counts."""
+    total = [0, 0, 0, 0, 0, 0, 0]
+    for result in results:
+        total[0] += len(result.errors)
+        total[1] += len(result.failures)
+        total[2] += len(result.skipped)
+        total[3] += len(result.expectedFailures)
+        total[4] += len(result.unexpectedSuccesses)
+        total[5] += result.testsRun
+    total[6] = sum(total[:-2]) - total[2] # Total gone wrong
+    return tuple(total)
+
+def run_tests(config, silent=False):
     """
     Discovers plugins and runs their test cases. Returns success as boolean.
     Logs info to test.log with the configured loglevel.
     Requires a properly loaded ConfigParser object as parameter.
     """
+    info('Looking up test modules...', test=True)
+    # Get test modules
+    test_modules = [] # Contains tuple (module, pluginname)
+    for plugin in discover_plugins(config):
+        try:
+            test_modules.append((getattr(getattr(
+                    __import__('plugins.%s.%s_test' %
+                        (plugin, plugin)), plugin),
+                    plugin + '_test'), plugin))
+            info('Loaded tests of plugin "%s".' % plugin, test=True)
+        except ImportError:
+            warning('Failed to load tests of plugin "%s". Do they exist?' %
+                    plugin, test=True)
+    info('Running tests...', test=True)
+    # Load suites and run tests
+    test_runner = unittest.TextTestRunner()
+    results = [test_runner.run(case)
+            for case in [get_suite(entry[1], config, entry[0])
+                for entry in test_modules]]
+    # Summarize results through reduction
+    total = _reduce_test_results(results)
+    info('%d errors, %d failures, %d skipped, %d expected failures, %d \
+unexpected successes. %d of %d tests were successful.' %
+            (total[0], total[1], total[2], total[3], total[4],
+                total[5] - total[6], total[5]), test=True)
+    if (total[6] < 1): # All tests successful
+        print('\033[92m[=======================================================\
+=============]\033[0m')
+    else:
+        print('\033[91m[=======================================================\
+=============]\033[0m')

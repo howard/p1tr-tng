@@ -68,6 +68,7 @@ def discover_plugins(config):
             # Skip plugins if one with the same name has already been loaded
             if plugin_dir_name in plugin_names:
                 debug(plugin_dir_name + ' has been found before. Skipping.')
+                continue
             # It passed all tests. It's most likely a plugin.
             plugin_names.append(plugin_dir_name)
     plugin_names.sort()

@@ -55,14 +55,15 @@ class $CLASS_NAME(PluginTestCase):
     """This is a dummy test case for the generated plugin scaffold."""
 
     def setUp(self):
-        super(PluginTestCase, self)
+        super(PluginTestCase, self).setUp()
         # Perform any setup task, but call the parent method first.
 
     def tearDown(self):
-        super(PluginTestCase, self)
+        super(PluginTestCase, self).tearDown()
         # Same goes for tearDown. If you don't need setUp or tearDown, you can
         # just omit them, though.
     
+    @test
     def myCommand_test(self):
         """
         This test runs the command with various parameters, checking if it is

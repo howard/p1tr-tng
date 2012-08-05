@@ -54,7 +54,7 @@ def set_logdir(path):
     global _logdir
     _logdir = path
     _clear_loggers()
-        
+
 def set_loglevel(loglevel):
     """
     Sets the minimum required importance of a log message in order to be written
@@ -121,6 +121,9 @@ def log(severity, message, **kwargs):
         if 'server' in kwargs:
             getattr(get_logger(kwargs['server'].split(':')[0]),
                     severity)(message)
+            return
+        if 'test' in kwargs:
+            getattr(get_logger('test'), severity)(message)
             return
         # All remaining messages are sent to the global log.
         getattr(get_logger('__global__'), severity)(message)

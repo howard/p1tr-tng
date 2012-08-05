@@ -312,14 +312,14 @@ configuration',
             error('No configuration file at the given path. Starting wizard...')
             config_path = config_wizard()
 
+    loglevel = logging.ERROR
+    set_loglevel(read_or_default(config, 'General', 'loglevel', logging.ERROR,
+        lambda val: getattr(logging, val)))
+
     # Run tests if the flag is set
     if args.test:
         run_tests(config)
         return # Exit after tests
-
-    loglevel = logging.ERROR
-    set_loglevel(read_or_default(config, 'General', 'loglevel', logging.ERROR,
-        lambda val: getattr(logging, val)))
 
     info('Connecting to servers...')
     for section in config:
