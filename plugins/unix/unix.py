@@ -1,3 +1,4 @@
+from p1tr.helpers import clean_string
 from p1tr.plugin import *
 import re
 import subprocess
@@ -10,7 +11,7 @@ def get_command_output(command):
 
 class Unix(Plugin):
     """Provides access to some classic unix commands."""
-    
+
     def __init__(self):
         Plugin.__init__(self)
         self._morse_pattern = re.compile(r'^[a-zA-Z0-1 \.\-]*$')

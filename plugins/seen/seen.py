@@ -1,5 +1,5 @@
 import datetime
-from p1tr.helpers import humanize_time
+from p1tr.helpers import clean_string, humanize_time
 from p1tr.plugin import *
 
 class Seen(Plugin):
@@ -36,7 +36,7 @@ class Seen(Plugin):
 
     def on_privmsg(self, server, channel, nick, message):
         self._remember(channel, nick, 'saying "%s"' % message)
-    
+
     def on_useraction(self, server, channel, nick, message):
         self._remember(channel, nick,
                 'saying "* %s %s"' % (nick.split('!')[0], message))

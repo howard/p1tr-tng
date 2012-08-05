@@ -1,3 +1,4 @@
+from p1tr.helpers import clean_string
 from p1tr.plugin import *
 
 @meta_plugin

@@ -16,6 +16,15 @@ def boolify(string):
 class BotError(Exception):
     """Raised on configuration- and non-plugin errors."""
 
+def clean_string(string):
+    """
+    Converts whitespace (includes newlines etc.) to single spaces. Useful to
+    avoid problems with the IRC protocol, which treats newlines, for example,
+    as message terminator.
+    """
+    if isinstance(string, bytes):
+        string = string.decode('utf-8')
+    return ' '.join(string.split())
 
 def humanize_time(delta):
     """
@@ -35,7 +44,7 @@ def humanize_time(delta):
             return '%s %s' % (value, unit)
         else:
             return ''
-    
+
     return ('%s %s %s %s' % (add_unit(days, 'day', 'days'),
             add_unit(hours, 'hour', 'hours'),
             add_unit(minutes, 'minute', 'minutes'),

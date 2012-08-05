@@ -1,3 +1,4 @@
+from p1tr.helpers import *
 from p1tr.plugin import *
 from oyoyo.helpers import ns, cs
 
@@ -110,7 +111,7 @@ class Authnickserv(AuthorizationProvider):
         self._enqueue('authenticated', 'voice', plugin, cmd, server, channel,
                 nick, message)
         ns(self.bot.client, 'ACC', nick.split('!')[0])
-    
+
     def authorize_authenticated(self, server, channel, nick, message, plugin,
             cmd):
         """Nick must be authenticated with NickServ."""

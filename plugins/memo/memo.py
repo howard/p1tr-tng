@@ -1,6 +1,5 @@
 import datetime
-
-from p1tr.helpers import humanize_time
+from p1tr.helpers import clean_string, humanize_time
 from p1tr.plugin import *
 
 @meta_plugin
@@ -53,7 +52,7 @@ class Memo(Plugin):
         self._add_message(params[0], nick.split('!')[0], ' '.join(params[1:]),
                 False)
         return 'Your memo will be delivered ASAP.'
-    
+
     @command
     def classified_memo(self, server, channel, nick, params):
         """
@@ -66,7 +65,7 @@ class Memo(Plugin):
         self._add_message(params[0], nick.split('!')[0], ' '.join(params[1:]),
                 True)
         return 'Your classified memo will be delifered ASAP.'
-    
+
     @command
     def pending_memos(self, server, channel, nick, params):
         """Returns number of not yet delivered memos."""

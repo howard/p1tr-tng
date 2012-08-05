@@ -5,24 +5,24 @@ class Logger(Plugin):
     """
     Conversation logging plugin.
 
-    Conversations are logged by default to a file in the bot's home directory. This
-    can be disabled by adding logger.log = no to the channel's section in the
-    configuration file.
+    Conversations are logged by default to a file in the bot's home directory.
+    This can be disabled by adding logger.log = no to the channel's section in
+    the configuration file.
     """
-    
+
     def __init__(self):
         Plugin.__init__(self)
         self._restricted_channels = []
 
     def load_settings(self, config):
         """
-        Overriding default behavior since the logger.log setting is 
+        Overriding default behavior since the logger.log setting is
         context-sensitive.
         """
         for section in config:
             if '|' in section:
                 if not config.getboolean(section, 'logger.log'):
-                    self._restricted_channels.append('#' + 
+                    self._restricted_channels.append('#' +
                             section.split('|')[1])
 
     def on_privmsg(self, server, channel, user, message):
@@ -61,7 +61,7 @@ class Logger(Plugin):
 
     def on_userpart(self, server, channel, nick, message):
         if channel in self._restricted_channels: return
-        plain(' ** ' + nick + ' left the channel: ' + message or 
+        plain(' ** ' + nick + ' left the channel: ' + message or
                 'no part message', server=server, channel=channel)
 
     def on_userkicked(self, server, channel, nick, reason):

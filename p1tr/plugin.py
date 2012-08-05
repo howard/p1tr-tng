@@ -89,18 +89,6 @@ def has_annotation(plugin, command, annotation):
     return annotation in getattr(plugin, command).__annotations__
 
 
-# Some utility functions
-def clean_string(string):
-    """
-    Converts whitespace (includes newlines etc.) to single spaces. Useful to
-    avoid problems with the IRC protocol, which treats newlines, for example,
-    as message terminator.
-    """
-    if isinstance(string, bytes):
-        string = string.decode('utf-8')
-    return ' '.join(string.split())
-
-
 class PluginError(Exception):
     """
     Thrown when plugin loading fails.

@@ -1,6 +1,6 @@
 import inspect
+from p1tr.helpers import clean_string, pretty_list
 from p1tr.plugin import *
-from p1tr.helpers import pretty_list
 
 @meta_plugin
 class Help(Plugin):
