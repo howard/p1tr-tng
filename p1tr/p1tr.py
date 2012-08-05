@@ -14,8 +14,9 @@ sys.path.insert(0, os.getcwd())
 
 from p1tr.config import config_wizard, read_or_default, load_config
 from p1tr.helpers import BotError
-from p1tr.plugin import *
 from p1tr.logwrap import *
+from p1tr.plugin import *
+from p1tr.test import run_tests
 
 
 class BotHandler(DefaultCommandHandler):
@@ -328,7 +329,12 @@ def main():
     argparser = argparse.ArgumentParser(description='P1tr TNG - IRC bot.')
     argparser.add_argument('-c', '--conf', help='path to configuration file',
             action='store', default='config.cfg')
-    argparser.add_argument('-m', '--mkconf', help='launches the configuration wizard',
+    argparser.add_argument('-m', '--mkconf',
+            help='launches the configuration wizard',
+            action='store_const', const=True, default=False)
+    argparser.add_argument('-t', '--test',
+            help='runs plugin test suites and exits afterwards. Requires valid \
+configuration',
             action='store_const', const=True, default=False)
     args = argparser.parse_args()
 
@@ -348,6 +354,11 @@ def main():
         except BotError:
             error('No configuration file at the given path. Starting wizard...')
             config_path = config_wizard()
+
+    # Run tests if the flag is set
+    if args.test:
+        run_tests(config)
+        return # Exit after tests
 
     loglevel = logging.ERROR
     set_loglevel(read_or_default(config, 'General', 'loglevel', logging.ERROR,
