@@ -133,11 +133,11 @@ class Karma(Plugin):
         """
         if len(params) < 1:
             return clean_string(self.nirvana.__doc__)
-        user = nick.split('!')[0]
-        if not user in self.karma:
-            return '%s already has a clean slate.' % user
-        del self.karma[user]
-        return "%s's karma has been neutralized." % user
+        target = params[0]
+        if not target in self.karma:
+            return '%s already has a clean slate.' % target
+        del self.karma[target]
+        return "%s's karma has been neutralized." % target
 
     def _change_karma(self, nick, target, mode):
         """
