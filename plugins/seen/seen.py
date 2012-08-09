@@ -42,7 +42,7 @@ class Seen(Plugin):
                 'saying "* %s %s"' % (nick.split('!')[0], message))
 
     def on_userjoin(self, server, channel, nick):
-        self._remember(channel, nick, 'entering the channel')
+        self._remember(channel, nick, 'joining the channel')
 
     def on_userpart(self, server, channel, nick, message):
         activity = 'leaving the channel'
