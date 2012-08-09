@@ -2,7 +2,7 @@
 
 import inspect
 from collections import namedtuple
-import functools
+import sys
 import unittest
 from p1tr.logwrap import info, warning
 from p1tr.plugin import _add_annotation, discover_plugins, load_by_name
@@ -75,10 +75,10 @@ def get_suite(plugin, config, module):
     test_cases = []
     for test_class in test_classes:
         for member in inspect.getmembers(test_class):
-            if hasattr(member[1], '__annotations__') and \
-                    'test' in member[1].__annotations__:
-                test_cases.append(test_class(member[0]))
-                test_cases[-1].plugin = load_by_name(plugin, config)
+            if hasattr(member[1], '__annotations__'):
+                if 'test' in member[1].__annotations__:
+                    test_cases.append(test_class(member[0]))
+                    test_cases[-1].plugin = load_by_name(plugin, config)
     return unittest.TestSuite(test_cases)
 
 def _reduce_test_results(results):
@@ -128,6 +128,8 @@ unexpected successes. %d of %d tests were successful.' %
     if (total[6] < 1): # All tests successful
         print('\033[92m[=======================================================\
 =============]\033[0m')
+        sys.exit(0) # Exit with success
     else:
         print('\033[91m[=======================================================\
 =============]\033[0m')
+        sys.exit(1) # Indicate test failure in exit value
