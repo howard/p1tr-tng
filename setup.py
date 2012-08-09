@@ -17,6 +17,7 @@ setup(
         license='MIT',
         url='https://github.com/howard/p1tr-tng',
         install_requires=['oyoyo'],
+        package_data={'': ['LICENSE', 'README.md', 'config.cfg.ex']},
         include_package_data=True,
         packages=find_packages(),
         entry_points="""
