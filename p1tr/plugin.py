@@ -224,8 +224,8 @@ class Plugin:
         module. Pretty much anything can be serialized using this mechanism. For
         details, refer to the documentation of the shelve module.
 
-        The pickle protocol version 3 is used, which was introduced with Python 3
-        and is not backward compatible.
+        The pickle protocol version 3 is used, which was introduced with Python
+        3 and is not backward compatible.
 
         The file behind this storage instance is stored in the file at
         $home/data/$plugin/$identifier.db, whereas $home is the bot home

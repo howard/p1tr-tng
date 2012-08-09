@@ -56,7 +56,27 @@ ____', nick='longnickn', params=['text'], message="  \ttext ")
     plugin = None
 
     def setUp(self):
-        """"""
+        """
+        Prepare the plugin to be tested:
+        * Replace the load_storage method with a dummy, returning a plain
+          dictionary so that test data is volatile. Do the same for related
+          methods. But still track the opened storage instances to reveal
+          errors in this direction.
+        """
+        self.plugin.test_storages = []
+        def _load_storage(self, identifier):
+            self.test_storages.append(identifier)
+            return {}
+        self.plugin.load_storage = _load_storage
+        def _save_storage(self, identifier=None, storage=None):
+            if identifier and not identifier in self.test_storage:
+                raise ValueError('Storage with the identifier "%s" not found.' \
+                        % identifier)
+        self.plugin.save_storage = _save_storage
+        def _close_storage(self, identifier=None, storage=None):
+            _save_storage(identifier, storage)
+            self.test_storages.remove(identifier)
+        self.plugin.close_storage = _close_storage
 
     def tearDown(self):
         """"""
