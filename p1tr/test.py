@@ -91,7 +91,7 @@ def _reduce_test_results(results):
         total[3] += len(result.expectedFailures)
         total[4] += len(result.unexpectedSuccesses)
         total[5] += result.testsRun
-    total[6] = sum(total[:-2]) - total[2] # Total gone wrong
+    total[6] = sum(total[:-2]) - total[2] - total[3]  # Total gone wrong
     return tuple(total)
 
 def run_tests(config, silent=False):
