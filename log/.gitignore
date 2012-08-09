@@ -1,0 +1,2 @@
+# This .gitignore file basically exists so the log folder can be committed.
+*.log
