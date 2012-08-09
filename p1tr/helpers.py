@@ -45,6 +45,10 @@ def humanize_time(delta):
         else:
             return ''
 
+    # Exception for zero-duration: return 0 seconds
+    if days < 1 and hours < 1 and minutes < 1 and seconds < 1:
+        return '0 seconds'
+
     return ('%s %s %s %s' % (add_unit(days, 'day', 'days'),
             add_unit(hours, 'hour', 'hours'),
             add_unit(minutes, 'minute', 'minutes'),
