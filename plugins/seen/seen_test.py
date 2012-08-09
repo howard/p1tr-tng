@@ -3,12 +3,6 @@ from p1tr.helpers import *
 
 class SeenTest(PluginTestCase):
 
-    def hello_test(self):
-        for data in self.dummy_data:
-            self.assertEqual(self.plugin.hello(data.server, data.channel,
-                        data.nick, data.params),
-                    'Hello, %s!' % data.nick.split('!')[0])
-
     @test
     def seen_invalid_test(self):
         """Test wrong use of the command."""
