@@ -146,10 +146,10 @@ unexpected successes. %d of %d tests were successful.' %
             (total[0], total[1], total[2], total[3], total[4],
                 total[5] - total[6], total[5]), test=True)
     if (total[6] < 1): # All tests successful
-        print('\033[92m[=======================================================\
+        print('\033[92m[=====SUCCESS===========================================\
 =============]\033[0m')
         sys.exit(0) # Exit with success
     else:
-        print('\033[91m[=======================================================\
+        print('\033[91m[=====FAILURE===========================================\
 =============]\033[0m')
         sys.exit(1) # Indicate test failure in exit value
