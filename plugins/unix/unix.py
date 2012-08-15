@@ -69,7 +69,7 @@ class Unix(Plugin):
     def number(self, server, channel, nick, params):
         """Usage: number NUMBER - translates arabic numerals to english text."""
         if len(params) < 1:
-            return clean_string(self.morse.__doc__)
+            return clean_string(self.number.__doc__)
         try:
             return get_command_output('number -l ' + str(int(params[0])))
         except ValueError:
