@@ -3,6 +3,7 @@
 import configparser
 import os.path
 from p1tr.helpers import boolify, BotError, pretty_list
+from p1tr.logwrap import info
 
 def prompt(description, default, vals=[]):
     """
