@@ -1,4 +1,5 @@
 from oyoyo.client import IRCClient
+from oyoyo.client import IRCApp
 from oyoyo.cmdhandler import DefaultCommandHandler
 from oyoyo import helpers
 
@@ -321,6 +322,9 @@ configuration',
         run_tests(config)
         return # Exit after tests
 
+    application = IRCApp()
+    application.sleep_time = 0.2
+
     info('Connecting to servers...')
     for section in config:
         if section != 'General' and not '|' in section:
@@ -332,23 +336,19 @@ configuration',
                         connect_cb=on_connect)
                 clients[section].command_handler.load_config(config)
                 clients[section].command_handler.load_plugins()
-                connections[section] = clients[section].connect()
+                application.addClient(clients[section], autoreconnect=True)
             except (KeyError, configparser.NoOptionError): pass # Not a server.
             except ValueError as ve:
                 info('Config section ' + section + ' will be ignored: ' + str(ve))
 
     info('Startup complete.')
-    running = True
     try:
-        while running:
-            for client in clients:
-                next(connections[client])
+        application.run()
     except KeyboardInterrupt:
-        running = False
-    for client in clients:
-        clients[client].command_handler.exit()
-    info('All clients terminated. Goodbye!')
-
+        for client in clients:
+            clients[client].command_handler.exit()
+        application.stop()
+        info('All clients terminated. Goodbye!')
 
 
 if __name__ == '__main__':
