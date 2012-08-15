@@ -173,7 +173,10 @@ class Karma(Plugin):
     def on_privmsg(self, server, channel, nick, message):
         """Listens for nick++ and nick--."""
         user = nick.split('!')[0]
-        word = message.split()[0]
+        words = message.split()
+        if len(words) < 1:
+            return
+        word = words[0]
         if not word[:-2] in self.exceptions:
             if word.endswith('++'):
                 return self._change_karma(user, word[:-2], True)
