@@ -75,7 +75,7 @@ def discover_plugins(config):
     return plugin_names
 
 
-def load_by_name(plugin_name, config):
+def load_by_name(plugin_name):
     """
     Attempts to load a plugin. The steps for that are as follows:
     1. Search for a directory named the all-lowercase version of plugin_name.
@@ -90,9 +90,7 @@ def load_by_name(plugin_name, config):
        should be defined in the file.
     3. The resulting object is checked, whether its class is derived from
        Plugin.
-    4. Apply plugin settings as specified in the configuration file to the
-       plugin.
-    5. The instance of the plugin is returned.
+    4. The instance of the plugin is returned.
     If any step fails, a PluginError exception is thrown.
 
     The parameter config should be an instance of ConfigParser, which has
@@ -108,9 +106,6 @@ def load_by_name(plugin_name, config):
             plugin_name.capitalize())()
     if not isinstance(instance, Plugin):
         raise PluginError('Invalid plugin: Not derived from Plugin.')
-
-    # Apply settings and return plugin instance.
-    instance.load_settings(config)
     return instance
 
 

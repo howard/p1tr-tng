@@ -59,12 +59,14 @@ class BotHandler(DefaultCommandHandler):
         for plugin_dir_name in discover_plugins(self.config):
             try:
                 debug('Trying to load plugin ' + plugin_dir_name + '...')
-                this_plugin = load_by_name(plugin_dir_name, self.config)
+                this_plugin = load_by_name(plugin_dir_name)
                 # If this is a meta plugin, add the bot attribute:
                 if hasattr(this_plugin, '__annotations__') and \
                         this_plugin.__annotations__['meta_plugin']:
                     debug(plugin_dir_name + ' is a meta plugin.')
                     this_plugin.bot = self
+                # Load plugin-specific settings
+                this_plugin.load_settings(self.config)
                 # Register as authorization provider, if possible:
                 if not self.auth_provider and \
                         isinstance(this_plugin, AuthorizationProvider):

@@ -98,7 +98,9 @@ def get_suite(plugin, config, module):
             if hasattr(member[1], '__annotations__'):
                 if 'test' in member[1].__annotations__:
                     test_cases.append(test_class(member[0]))
-                    test_cases[-1].plugin = load_by_name(plugin, config)
+                    test_cases[-1].plugin = load_by_name(plugin)
+                    #TODO: Add bot instance simulation
+                    test_cases[-1].plugin.load_settings(config)
     return unittest.TestSuite(test_cases)
 
 def _reduce_test_results(results):
