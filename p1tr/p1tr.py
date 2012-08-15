@@ -323,7 +323,8 @@ configuration',
         return # Exit after tests
 
     application = IRCApp()
-    application.sleep_time = 0.2
+    application.sleep_time = read_or_default(config, 'General', 'sleeptime',
+            0.2, lambda val: float(val))
 
     info('Connecting to servers...')
     for section in config:

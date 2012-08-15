@@ -17,6 +17,10 @@ plugin_blacklist =
 # The word following the character below is interpreted as a command and passed
 # on to the plugins.
 signal_character = +
+# P1tr processes IRC events and requests in a loop. As soon as all pending
+# items are processed, the process is sent to sleep for an amount of time, which
+# can be specified here. This is a polling strategy that conserves CPU time.
+sleeptime = 0.2
 
 # This is a sample configuration, demonstrating the available options.
 ;[SampleServer]
