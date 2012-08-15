@@ -74,7 +74,9 @@ class Karma(Plugin):
     """
     Modify people's karma by writing their nick, postfixed with ++ or --.
     Example: sebner++, P1tr--. You can access statistics using the karma
-    command.
+    command. Some words may not be tracked - see the karma_exceptions command.
+    The nick whose karma should be changed must always be at the beginning of a
+    message.
     """
 
     def __init__(self):
@@ -84,6 +86,11 @@ class Karma(Plugin):
         # in-place changes. Creating a new tuple for every single karma change
         # is a waste.
         self.karma = self.load_storage('karma')
+
+    def load_settings(self, config):
+        """Loads words whose karma should not be tracked from config."""
+        self.exceptions = read_or_default(config, 'General', 'karma.exceptions',
+                [], lambda val: val.split())
 
     @command
     def karmastats(self, server, channel, nick, params):
@@ -139,6 +146,11 @@ class Karma(Plugin):
         del self.karma[target]
         return "%s's karma has been neutralized." % target
 
+    @command
+    def karma_exceptions(self, server, channel, nick, params):
+        """Prints all words whose karma can not be tracked."""
+        return pretty_list(self.exceptions)
+
     def _change_karma(self, nick, target, mode):
         """
         Changes target's karma. If mode is True, karma is increased by 1.
@@ -161,7 +173,8 @@ class Karma(Plugin):
     def on_privmsg(self, server, channel, nick, message):
         """Listens for nick++ and nick--."""
         user = nick.split('!')[0]
-        for word in message.split():
+        word = message.split()[0]
+        if not word[:-2] in self.exceptions:
             if word.endswith('++'):
                 return self._change_karma(user, word[:-2], True)
             elif word.endswith('--'):
