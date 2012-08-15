@@ -7,4 +7,4 @@ class Hello(Plugin):
 
     @command
     def hello(self, server, channel, nick, args):
-        return 'Hello, ' + nick + '!'
+        return 'Hello, ' + nick.split('!')[0] + '!'
