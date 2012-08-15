@@ -1,13 +1,21 @@
 from p1tr.helpers import clean_string
 from p1tr.plugin import *
+import os
 import re
 import subprocess
 
 def get_command_output(command):
-        """Returns the output of a console command. Discards STDERR."""
-        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-        stdout_value, stderr_value = process.communicate()
-        return clean_string(stdout_value.decode('utf-8'))
+    """Returns the output of a console command. Discards STDERR."""
+    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+    stdout_value, stderr_value = process.communicate()
+    return clean_string(stdout_value.decode('utf-8'))
+
+def check_available(command):
+    """Returns True if the command is available on the system."""
+    if os.name != 'posix':
+        return False
+    return len(get_command_output('which %s' % command)) > 0
+
 
 class Unix(Plugin):
     """Provides access to some classic unix commands."""
@@ -19,6 +27,8 @@ class Unix(Plugin):
     @command
     def fortune(self, server, channel, nick, params):
         """Prints a random fortune cookie."""
+        if not check_available('fortune'):
+            return 'The fortune command is not installed on my host.'
         return get_command_output('fortune')
 
     @command
@@ -27,11 +37,15 @@ class Unix(Plugin):
         Displays information about the operating system, as provided by the
         uname -a command.
         """
+        if not check_available('uname'):
+            return 'The uname command is not installed on my host.'
         return get_command_output('uname -a')
 
     @command
     def uptime(self, server, channel, nick, params):
         """Prints operating system uptime."""
+        if not check_available('uptime'):
+            return 'The uptime command is not installed on my host.'
         return get_command_output('uptime')
 
     @command
@@ -40,6 +54,8 @@ class Unix(Plugin):
         Usage: pom [YYYYMMDDHH] - Current moon phase. You can optionally provide
         a date in the given format to get the moon phase at this point in time.
         """
+        if not check_available('pom'):
+            return 'The pom command is not installed on my host.'
         if len(params) > 0:
             try:
                 date = int(params[0])
@@ -54,6 +70,8 @@ class Unix(Plugin):
         Usage: morse decode|encode TEXT - translates a given TEXT to and from
         morse code.
         """
+        if not check_available('morse'):
+            return 'The morse command is not installed on my host.'
         if len(params) < 2 or not params[0] in ('decode', 'encode'):
             return clean_string(self.morse.__doc__)
         text = ' '.join(params[1:])
@@ -68,6 +86,8 @@ class Unix(Plugin):
     @command
     def number(self, server, channel, nick, params):
         """Usage: number NUMBER - translates arabic numerals to english text."""
+        if not check_available('number'):
+            return 'The number command is not installed on my host.'
         if len(params) < 1:
             return clean_string(self.number.__doc__)
         try:
@@ -82,6 +102,8 @@ class Unix(Plugin):
         cipher. ROTATION is the number by which the letters in MESSAGE are
         shifted.
         """
+        if not check_available('caesar'):
+            return 'The caesar command is not installed on my host.'
         if len(params) < 2:
             return clean_string(self.caesar.__doc__)
         rotation = 0
