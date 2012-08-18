@@ -100,14 +100,14 @@ class BotHandler(DefaultCommandHandler):
 
     def privmsg(self, nick, chan, msg):
         # Check if this is actually a PRIVMSG, not an action.
-        if msg.decode('utf-8').startswith('\x01ACTION'):
+        if msg.decode().startswith('\x01ACTION'):
             self.action(nick, chan, msg)
             return
         # Regular PRIVMSG from here onwarts
         def _plugin_handler(plugin):
             ret_val = plugin.on_privmsg('%s:%d' % (self.client.host,
-                self.client.port), chan.decode('utf-8'), nick.decode('utf-8'),
-                msg.decode('utf-8'))
+                self.client.port), chan.decode(), nick.decode(),
+                msg.decode())
             if isinstance(ret_val, str) and len(ret_val) > 0:
                 self.client.send('PRIVMSG', chan, ':' + ret_val)
         self._for_each_plugin(_plugin_handler)
@@ -115,11 +115,11 @@ class BotHandler(DefaultCommandHandler):
         try:
             cmd = ''
             args = []
-            msg = msg.decode('utf-8')
-            if chan.decode('utf-8') == self.client.nick:
-                respond_to = nick.decode('utf-8').split('!')[0]
+            msg = msg.decode()
+            if chan.decode() == self.client.nick:
+                respond_to = nick.decode().split('!')[0]
             else:
-                respond_to = chan.decode('utf-8')
+                respond_to = chan.decode()
             if msg.startswith(self.signal_character):
                 parts = msg.replace(self.signal_character, '').split(' ')
                 cmd = parts[0]
@@ -128,7 +128,7 @@ class BotHandler(DefaultCommandHandler):
                 parts = msg.replace(self.client.nick, '', 1).split(' ')
                 cmd = parts[1]
                 args = parts[2:]
-            elif chan.decode('utf-8') == self.client.nick: # In case of query
+            elif chan.decode() == self.client.nick: # In case of query
                 parts = msg.split(' ')
                 cmd = parts[0]
                 args = parts[1:]
@@ -142,38 +142,38 @@ class BotHandler(DefaultCommandHandler):
             if self.auth_provider and \
                     has_annotation(self.commands[cmd], cmd, 'require_master'):
                 self.auth_provider.authorize_master(server_str,
-                        chan.decode('utf-8'), nick.decode('utf-8'),
+                        chan.decode(), nick.decode(),
                         msg, self.commands[cmd], cmd)
                 return
             elif self.auth_provider and \
                     has_annotation(self.commands[cmd], cmd, 'require_owner'):
                 self.auth_provider.authorize_owner(server_str,
-                        chan.decode('utf-8'), nick.decode('utf-8'),
+                        chan.decode(), nick.decode(),
                         msg, self.commands[cmd], cmd)
                 return
             elif self.auth_provider and \
                     has_annotation(self.commands[cmd], cmd, 'require_op'):
                 self.auth_provider.authorize_op(server_str,
-                        chan.decode('utf-8'), nick.decode('utf-8'),
+                        chan.decode(), nick.decode(),
                         msg, self.commands[cmd], cmd)
                 return
             elif self.auth_provider and \
                     has_annotation(self.commands[cmd], cmd, 'require_hop'):
                 self.auth_provider.authorize_hop(server_str,
-                        chan.decode('utf-8'), nick.decode('utf-8'),
+                        chan.decode(), nick.decode(),
                         msg, self.commands[cmd], cmd)
                 return
             elif self.auth_provider and \
                     has_annotation(self.commands[cmd], cmd, 'require_voice'):
                 self.auth_provider.authorize_voice(server_str,
-                        chan.decode('utf-8'), nick.decode('utf-8'),
+                        chan.decode(), nick.decode(),
                         msg, self.commands[cmd], cmd)
                 return
             elif self.auth_provider and \
                     has_annotation(self.commands[cmd], cmd,
                             'require_authenticated'):
                 self.auth_provider.authorize_authenticated(server_str,
-                        chan.decode('utf-8'), nick.decode('utf-8'),
+                        chan.decode(), nick.decode(),
                         msg, self.commands[cmd], cmd)
                 return
             elif not self.auth_provider and \
@@ -181,10 +181,10 @@ class BotHandler(DefaultCommandHandler):
                 # Even if no auth provider is available, restrict master
                 # commands to users with a fitting nick. This is the least
                 # we can do for security.
-                if nick.decode('utf-8').split('!')[0] != self.master: return
+                if nick.decode().split('!')[0] != self.master: return
             # Not a privileged command. Handle as usual.
             ret_val = getattr(self.commands[cmd], cmd)(server_str,
-                    chan.decode('utf-8'), nick.decode('utf-8'), args)
+                    chan.decode(), nick.decode(), args)
             # If text was returned, send it as a response.
             if isinstance(ret_val, str) or isinstance(ret_val, bytes):
                 self.client.send('PRIVMSG', respond_to, ':' + ret_val)
@@ -194,15 +194,15 @@ class BotHandler(DefaultCommandHandler):
         except (ValueError, KeyError): pass
 
     def join(self, nick, chan):
-        nick = nick.decode('utf-8')
+        nick = nick.decode()
         if nick.split('!')[0] == self.client.nick:
             self._for_each_plugin(lambda plugin:
                     plugin.on_join(self.client.host + ':' + str(self.client.port),
-                        chan.decode('utf-8')))
+                        chan.decode()))
         else:
             self._for_each_plugin(lambda plugin:
                     plugin.on_userjoin(self.client.host + ':' + str(self.client.port),
-                        chan.decode('utf-8'), nick))
+                        chan.decode(), nick))
 
     def connected(self):
         self._for_each_plugin(lambda plugin:
@@ -212,36 +212,36 @@ class BotHandler(DefaultCommandHandler):
         """Called on actions (you usually do those with /me)"""
         self._for_each_plugin(lambda plugin:
                 plugin.on_useraction(self.client.host + ':' +
-                    str(self.client.port), chan.decode('utf-8'),
-                    nick.decode('utf-8'),
-                    ' '.join(msg.decode('utf-8').split()[1:])))
+                    str(self.client.port), chan.decode(),
+                    nick.decode(),
+                    ' '.join(msg.decode().split()[1:])))
 
     def notice(self, nick, chan, msg):
         """Usually issued by the server or services."""
         self._for_each_plugin(lambda plugin:
                 plugin.on_notice(self.client.host + ':' +
-                    str(self.client.port), chan.decode('utf-8'),
-                    nick.decode('utf-8'), msg.decode('utf-8')))
+                    str(self.client.port), chan.decode(),
+                    nick.decode(), msg.decode()))
 
     def nick(self, oldnick, newnick):
         """Called when a user renames themselves."""
         self._for_each_plugin(lambda plugin:
                 plugin.on_userrenamed(self.client.host + ':' +
-                    str(self.client.port), oldnick.decode('utf-8'),
-                    newnick.decode('utf-8')))
+                    str(self.client.port), oldnick.decode(),
+                    newnick.decode()))
 
     def mode(self, nick, chan, msg):
         """Called on MODE responses."""
         self._for_each_plugin(lambda plugin:
                 plugin.on_modechanged(self.client.host + ':' +
-                    str(self.client.port), chan.decode('utf-8'),
-                    nick.decode('utf-8'), msg.decode('utf-8')))
+                    str(self.client.port), chan.decode(),
+                    nick.decode(), msg.decode()))
 
     def quit(self, nick, message):
         """Called on disconnect."""
         self._for_each_plugin(lambda plugin:
                 plugin.on_userquit(self.client.host + ':' + str(self.client.port),
-                    nick.decode('utf-8'), message.decode('utf-8')))
+                    nick.decode(), message.decode()))
 
     def exit(self):
         """Called on bot termination."""
@@ -252,19 +252,19 @@ class BotHandler(DefaultCommandHandler):
 
     def __unhandled__(self, cmd, *args):
         """Unhandled commands go to this handler."""
-        cmd = cmd.decode('utf-8')
+        cmd = cmd.decode()
         if cmd == '353': # Channel member list
-            channel = args[3].decode('utf-8')
+            channel = args[3].decode()
             # The member list may be spread across multiple messages
             if not channel in self.nicks:
                 self.nicks[channel] = {}
-            for nick in args[4].decode('utf-8').split():
+            for nick in args[4].decode().split():
                 if nick[0] in ('@', '%', '+'):
                     self.nicks[channel][nick[1:]] = nick[0]
                 else:
                     self.nicks[channel][nick] = ''
         elif cmd == '366': # Channel member list fetching done.
-            channel = args[2].decode('utf-8')
+            channel = args[2].decode()
             self._for_each_plugin(lambda plugin:
                     plugin.on_names(self.client.host + ':' +
                         str(self.client.port), channel,
@@ -273,7 +273,7 @@ class BotHandler(DefaultCommandHandler):
         elif cmd == '372': # MOTD
             self._for_each_plugin(lambda plugin:
                     plugin.on_motd(self.client.host + ':' +
-                        str(self.client.port), args[2].decode('utf-8')))
+                        str(self.client.port), args[2].decode()))
         else:
             debug('Unknown command: [' + cmd + '] ' + str(args),
                     server=self.client.host)
