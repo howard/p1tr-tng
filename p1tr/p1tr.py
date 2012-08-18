@@ -270,6 +270,10 @@ class BotHandler(DefaultCommandHandler):
                         str(self.client.port), channel,
                         self.nicks[channel]))
             self.nicks[channel] = {}
+        elif cmd == '372': # MOTD
+            self._for_each_plugin(lambda plugin:
+                    plugin.on_motd(self.client.host + ':' +
+                        str(self.client.port), args[2].decode('utf-8')))
         else:
             debug('Unknown command: [' + cmd + '] ' + str(args),
                     server=self.client.host)

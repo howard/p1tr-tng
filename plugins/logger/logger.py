@@ -30,6 +30,9 @@ class Logger(Plugin):
         plain('<' + user.split('!')[0] + '> ' + message,
                 server=server, channel=channel)
 
+    def on_motd(self, server, message):
+        info(' * MOTD: %s' % message)
+
     def on_join(self, server, channel):
         if channel in self._restricted_channels: return
         plain(' ** The bot joined the channel.', server=server, channel=channel)
