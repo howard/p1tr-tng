@@ -49,7 +49,8 @@ class Authnickserv(AuthorizationProvider):
         if not user in self._command_queues[queue_name]:
             self._command_queues[queue_name][user] = []
         self._command_queues[queue_name][user].append(
-                (next_queue, plugin, command, server, channel, nick, message))
+                (next_queue, plugin, command, server, channel, nick,
+                    ' '.join(message)))
 
     def _respond_denial(self, server, channel, nick):
         """Sends reponse to unauthorized users."""
