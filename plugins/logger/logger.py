@@ -78,6 +78,14 @@ class Logger(Plugin):
         plain(' * ' + nick.split('!')[0] + ' ' + message, server=server,
                 channel=channel)
 
+    def on_userquit(self, server, nick, message):
+        if len(message) > 0:
+            message = ', saying: %s' % message
+        else:
+            message = '.'
+        info(' ** %s disconnected from the server%s' % (nick.split('!')[0],
+            message), server=server)
+
     def on_notice(self, server, channel, nick, message):
         if channel in self._restricted_channels: return
         info(' * NOTICE from ' + nick.split('!')[0] + ': ' + message,

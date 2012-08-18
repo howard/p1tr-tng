@@ -237,11 +237,11 @@ class BotHandler(DefaultCommandHandler):
                     str(self.client.port), chan.decode('utf-8'),
                     nick.decode('utf-8'), msg.decode('utf-8')))
 
-    def quit(self, message):
+    def quit(self, nick, message):
         """Called on disconnect."""
         self._for_each_plugin(lambda plugin:
-                plugin.disconnect(self.client.host + ':' + str(self.client.port),
-                    message.decode('utf-8')))
+                plugin.on_userquit(self.client.host + ':' + str(self.client.port),
+                    nick.decode('utf-8'), message.decode('utf-8')))
 
     def exit(self):
         """Called on bot termination."""

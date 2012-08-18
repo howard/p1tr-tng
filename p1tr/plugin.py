@@ -350,6 +350,9 @@ class Plugin:
         allow users to do this.
         """
 
+    def on_userquit(self, server, nick, message):
+        """Triggered whenever a user disconnects from the server."""
+
     def on_names(self, server, channel, namelist):
         """Triggered when channel member list is received."""
 
