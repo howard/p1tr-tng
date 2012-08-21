@@ -9,7 +9,7 @@ P1tr is a highly modular, configurable IRC bot. This is a complete remake of the
 [original P1tr](https://github.com/AustrianGeekForce/p1tr-legacy), created by
 the AustrianGeekForce and contributors.
 
-Current version: 0.1alpha
+Current version: 0.1beta
 Requires: Python 3.2, oyoyo
 
 What's new?

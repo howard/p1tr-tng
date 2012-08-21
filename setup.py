@@ -9,7 +9,7 @@ except:
 
 setup(
         name='P1tr',
-        version='0.1alpha',
+        version='0.1beta',
         description='A modular irc bot.',
         author='Christian Ortner',
         author_email='chris.ortner@gmail.com',
