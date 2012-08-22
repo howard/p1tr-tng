@@ -30,7 +30,7 @@ class Logger(Plugin):
                 server=server, channel=channel)
 
     def on_motd(self, server, message):
-        info(' * MOTD: %s' % message)
+        info(' * MOTD: %s' % message, server=server)
 
     def on_join(self, server, channel):
         if channel in self._restricted_channels: return
