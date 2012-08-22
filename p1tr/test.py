@@ -100,6 +100,8 @@ def get_suite(plugin, config, module):
                     test_cases.append(test_class(member[0]))
                     test_cases[-1].plugin = load_by_name(plugin)
                     #TODO: Add bot instance simulation
+                    test_cases[-1].plugin.data_path = 'test_data'
+                    test_cases[-1].plugin.initialize()
                     test_cases[-1].plugin.load_settings(config)
     return unittest.TestSuite(test_cases)
 
