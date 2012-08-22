@@ -79,7 +79,7 @@ class Karma(Plugin):
     message.
     """
 
-    def __init__(self):
+    def initialize(self):
         Plugin.__init__(self)
         # Structure: {nick: [positive, negative, last_change_time]}
         # Using a list instead of a tuple because tuple's immutability hinders

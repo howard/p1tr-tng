@@ -4,7 +4,7 @@ from p1tr.helpers import *
 class Wordtracker(Plugin):
     """Tracks how often a certain word is mentioned, and provides stats."""
 
-    def __init__(self):
+    def initialize(self):
         Plugin.__init__(self)
         # Structure: {word: {channel: {nick: count}}}
         self.tracklist = self.load_storage('tracklist')

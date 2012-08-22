@@ -10,8 +10,7 @@ class Logger(Plugin):
     the configuration file.
     """
 
-    def __init__(self):
-        Plugin.__init__(self)
+    def initialize(self):
         self._restricted_channels = []
 
     def load_settings(self, config):

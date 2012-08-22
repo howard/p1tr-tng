@@ -7,7 +7,7 @@ class Seen(Plugin):
     Tracks all user's most recent time of activity.
     """
 
-    def __init__(self):
+    def initialize(self):
         Plugin.__init__(self)
         # Storage format: key = username,
         # value = (timestamp, channel, lastActivity)

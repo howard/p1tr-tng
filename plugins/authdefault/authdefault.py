@@ -61,7 +61,7 @@ class Authdefault(AuthorizationProvider):
             self.users[':master'] = user
             self.users[':new_master'] = True
 
-    def __init__(self):
+    def initialize(self):
         self.users = self.load_storage('user_data')
         # De-authenticate all users
         for user in self.users:

@@ -9,7 +9,7 @@ class Memo(Plugin):
     again.
     """
 
-    def __init__(self):
+    def initialize(self):
         Plugin.__init__(self)
         # Structure of mailbag:
         # {'recipient': [(sender, time, message, confidential_flag)]}

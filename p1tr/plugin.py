@@ -2,6 +2,7 @@
 Plugin base class and related utilities.
 """
 import glob
+import os
 import os.path
 import shelve
 from string import ascii_lowercase
@@ -190,7 +191,16 @@ class Plugin:
 
     def __init__(self):
         """
-        Always call this constructor first thing in your plugin's constructor.
+        Use the initialize method instead!
+        """
+
+    def initialize(self):
+        """
+        Replacement for the constructor; necessary since some things, that may
+        be needed on plugin initialization, are injected after the instantiation
+        of the plugin. Thus, they are not available in the constructor.
+
+        This applies especially to settings- and storage related things.
         """
 
     def load_settings(self, config):
@@ -239,10 +249,19 @@ class Plugin:
             debug('Loaded storage at: ' + path)
             return storage
         except Exception as e:
-            error('Unable to load storage file at ' + path + ':',
-                    plugin=self.__class__.__name__.lower())
-            error(str(e))
-            raise
+            warning('Unable to load storage file at %s. Attempting directory \
+creation....' % path)
+            try:
+                os.makedirs(self.data_path)
+                storage = shelve.open(path, protocol=3, writeback=True)
+                self._storages[identifier] = storage
+                debug('Loaded storage at: ' + path)
+                return storage
+            except Exception as e:
+                error('Unable to load storage file at ' + path + ':',
+                        plugin=self.__class__.__name__.lower())
+                error(str(e))
+                raise
 
     def save_storage(self, identifier=None, storage=None):
         """

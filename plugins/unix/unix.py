@@ -20,8 +20,7 @@ def check_available(command):
 class Unix(Plugin):
     """Provides access to some classic unix commands."""
 
-    def __init__(self):
-        Plugin.__init__(self)
+    def initialize(self):
         self._morse_pattern = re.compile(r'^[a-zA-Z0-1 \.\-]*$')
 
     @command

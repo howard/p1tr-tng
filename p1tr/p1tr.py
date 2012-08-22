@@ -65,8 +65,6 @@ class BotHandler(DefaultCommandHandler):
                         this_plugin.__annotations__['meta_plugin']:
                     debug(plugin_dir_name + ' is a meta plugin.')
                     this_plugin.bot = self
-                # Load plugin-specific settings
-                this_plugin.load_settings(self.config)
                 # Register as authorization provider, if possible:
                 if not self.auth_provider and \
                         isinstance(this_plugin, AuthorizationProvider):
@@ -85,6 +83,9 @@ class BotHandler(DefaultCommandHandler):
                     except (AttributeError, KeyError): pass # Not a command
 
                 self.plugins[plugin_dir_name] = this_plugin
+                self.plugins[plugin_dir_name].initialize()
+                # Load plugin-specific settings
+                this_plugin.load_settings(self.config)
                 info('Plugin ' + plugin_dir_name + ' was loaded.')
             except PluginError as pe:
                 error('Plugin ' + plugin_dir_name +
@@ -319,9 +320,9 @@ configuration',
             error('No configuration file at the given path. Starting wizard...')
             config_path = config_wizard()
 
-    loglevel = logging.ERROR
-    set_loglevel(read_or_default(config, 'General', 'loglevel', logging.ERROR,
-        lambda val: getattr(logging, val)))
+    loglevel = read_or_default(config, 'General', 'loglevel', logging.ERROR,
+        lambda val: getattr(logging, val))
+    set_loglevel(loglevel)
 
     # Run tests if the flag is set
     if args.test:
