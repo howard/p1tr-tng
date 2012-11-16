@@ -34,6 +34,9 @@ class BotHandler(DefaultCommandHandler):
     """
     auth_provider = None
 
+    """Set to True if the P1tr instance on this server should be terminated."""
+    intended_disconnect = False
+
     """Temporary storage for loading nicklists for channels."""
     nicks = {}
 
@@ -231,8 +234,9 @@ class BotHandler(DefaultCommandHandler):
                     str(self.client.port), oldnick.decode(),
                     newnick.decode()))
 
-    def mode(self, nick, chan, msg):
+    def mode(self, nick, chan, *args):
         """Called on MODE responses."""
+        msg = args[0]
         self._for_each_plugin(lambda plugin:
                 plugin.on_modechanged(self.client.host + ':' +
                     str(self.client.port), chan.decode(),
@@ -243,6 +247,9 @@ class BotHandler(DefaultCommandHandler):
         self._for_each_plugin(lambda plugin:
                 plugin.on_userquit(self.client.host + ':' + str(self.client.port),
                     nick.decode(), message.decode()))
+        # Reconnect if disconnect was unintended
+        if not self.intended_disconnect:
+            self.client.connect()
 
     def exit(self):
         """Called on bot termination."""
