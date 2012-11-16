@@ -38,8 +38,12 @@ class Irc(Plugin):
         if len(params) > 0:
             channel = params[0]
         self.bot.client.send('PART', channel)
-    
+
     @command
     @require_master
     def quit(self, server, channel, nick, params):
-        self.blot.intended_disconnect = True
+        """
+        Usage: quit - Tell the bot to disconnect from the server.
+        """
+        self.bot.intended_disconnect = True
+        self.bot.exit()
